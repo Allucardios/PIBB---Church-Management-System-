@@ -4,12 +4,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 // Local Imports
 import '../../core/widgets/admin_gate.dart';
+import '../../core/widgets/responsive.dart';
 import '../../data/providers/auth_provider.dart';
 import '../../data/providers/finance_provider.dart';
 import '../card/income.dart';
 import '../form/income.dart';
 import '../view/drawer.dart';
-import '../../core/widgets/responsive.dart';
 
 class IncomePage extends ConsumerWidget {
   const IncomePage({super.key});
@@ -43,7 +43,7 @@ class IncomePage extends ConsumerWidget {
                 tablet: GridView.builder(
                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 2,
-                    childAspectRatio: 1.5,
+                    childAspectRatio: 3.0,
                     crossAxisSpacing: 10,
                     mainAxisSpacing: 10,
                   ),
@@ -54,7 +54,7 @@ class IncomePage extends ConsumerWidget {
                 desktop: GridView.builder(
                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 4,
-                    childAspectRatio: 1.5,
+                    childAspectRatio: 4.0,
                     crossAxisSpacing: 10,
                     mainAxisSpacing: 10,
                   ),
@@ -88,5 +88,9 @@ class IncomePage extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  Column d() {
+    return Column(mainAxisSize: MainAxisSize.min, children: []);
   }
 }

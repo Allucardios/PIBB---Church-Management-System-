@@ -93,7 +93,7 @@ class _CategoryPageState extends ConsumerState<CategoryPage> {
               tablet: GridView.builder(
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 2,
-                  childAspectRatio: 3,
+                  childAspectRatio: 3.5,
                   crossAxisSpacing: 10,
                   mainAxisSpacing: 10,
                 ),
@@ -104,7 +104,7 @@ class _CategoryPageState extends ConsumerState<CategoryPage> {
               desktop: GridView.builder(
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 4,
-                  childAspectRatio: 3,
+                  childAspectRatio: 4.5,
                   crossAxisSpacing: 10,
                   mainAxisSpacing: 10,
                 ),

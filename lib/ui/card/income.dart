@@ -17,23 +17,44 @@ class CardIncome extends StatelessWidget {
       margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: ListTile(
+      child: InkWell(
         onTap: () => Navigator.of(
           context,
         ).push(MaterialPageRoute(builder: (_) => ViewIncome(inc: inc))),
-        leading: const Icon(
-          Icons.monetization_on_outlined,
-          color: AppTheme.primary,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Icon(
+                    Icons.monetization_on_outlined,
+                    color: AppTheme.primary,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      formatDate(inc.date),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ),
+                  const Icon(Icons.chevron_right_rounded, color: Colors.grey),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                "Total: ${formatKwanza(inc.totalIncome())}",
+                style: const TextStyle(fontSize: 14, color: Colors.blueGrey),
+              ),
+            ],
+          ),
         ),
-        title: Text(
-          formatDate(inc.date),
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-        ),
-        subtitle: Text(
-          "Total: ${formatKwanza(inc.totalIncome())}",
-          style: const TextStyle(fontSize: 14),
-        ),
-        trailing: const Icon(Icons.chevron_right_rounded),
       ),
     );
   }

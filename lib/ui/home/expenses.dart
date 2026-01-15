@@ -42,7 +42,7 @@ class ExpensePage extends ConsumerWidget {
                 tablet: GridView.builder(
                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 2,
-                    childAspectRatio: 1.5,
+                    childAspectRatio: 3.0,
                     crossAxisSpacing: 10,
                     mainAxisSpacing: 10,
                   ),
@@ -53,7 +53,7 @@ class ExpensePage extends ConsumerWidget {
                 desktop: GridView.builder(
                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 4,
-                    childAspectRatio: 1.5,
+                    childAspectRatio: 4.0,
                     crossAxisSpacing: 10,
                     mainAxisSpacing: 10,
                   ),
