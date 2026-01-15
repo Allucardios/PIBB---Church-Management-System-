@@ -79,6 +79,7 @@ class ExpensePage extends ConsumerWidget {
       floatingActionButton: PermitGate(
         value: 'Manager',
         child: FloatingActionButton(
+          heroTag: 'expense_fab',
           onPressed: () => Navigator.of(
             context,
           ).push(MaterialPageRoute(builder: (_) => const ExpenseForm())),

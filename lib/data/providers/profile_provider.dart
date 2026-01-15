@@ -3,49 +3,83 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 // Local Imports
 import '../../core/const/app_config.dart';
 import '../../core/const/functions.dart';
 import '../models/user.dart';
+import 'auth_provider.dart';
 
 part 'profile_provider.g.dart';
 
 /// Current Profile Provider
 @riverpod
 class CurrentProfile extends _$CurrentProfile {
+  StreamSubscription<List<Map<String, dynamic>>>? _streamSubscription;
+
   @override
   Profile? build() {
-    // Listen to auth state changes to trigger rebuilds
-    final authSub = client.auth.onAuthStateChange.listen((data) {
-      if (data.event == AuthChangeEvent.signedOut) {
-        state = null;
-      }
-    });
+    // Watch Auth State. Rebuild building whenever auth state changes.
+    final user = ref.watch(authNotifierProvider);
 
-    ref.onDispose(() => authSub.cancel());
+    // Clear old subscription if it exists
+    _streamSubscription?.cancel();
 
-    final user = client.auth.currentUser;
-    if (user == null) return null;
+    if (user == null) {
+      if (kDebugMode) print('CurrentProfile: No user, state is null');
+      return null;
+    }
 
-    // Use stream for real-time updates of the current profile
-    final stream = client
+    // Subscribe to real-time updates for the current profile
+    if (kDebugMode) print('CurrentProfile: Subscribing to profile ${user.id}');
+
+    _streamSubscription = client
         .from('profiles')
         .stream(primaryKey: ['id'])
         .eq('id', user.id)
-        .map((rows) => rows.isEmpty ? null : Profile.fromJson(rows.first));
+        .listen(
+          (rows) {
+            if (rows.isNotEmpty) {
+              final profile = Profile.fromJson(rows.first);
+              state = profile;
+              if (kDebugMode)
+                print(
+                  'CurrentProfile: Update received! Level: ${profile.level}',
+                );
 
-    final subscription = stream.listen((profile) {
-      state = profile;
-      if (profile != null && profile.active == false) {
-        client.auth.signOut();
-      }
+              // Force logout if user is deactivated
+              if (profile.active == false) {
+                if (kDebugMode)
+                  print('CurrentProfile: User deactivated. Signing out.');
+                ref
+                    .read(authErrorNotifierProvider.notifier)
+                    .setError(
+                      'A tua conta está desativada. Contacta o administrador.',
+                    );
+                ref.read(authServiceProvider.notifier).signOut();
+              }
+            } else {
+              state = null;
+            }
+          },
+          onError: (err) {
+            final errorStr = err.toString();
+            if (kDebugMode) print('CurrentProfile: Stream Error: $errorStr');
+
+            if (errorStr.contains('invalidjwttoken') ||
+                errorStr.contains('JWT expired')) {
+              if (kDebugMode)
+                print('CurrentProfile: JWT Error detected. Signing out.');
+              ref.read(authServiceProvider.notifier).signOut();
+            }
+          },
+        );
+
+    ref.onDispose(() {
+      _streamSubscription?.cancel();
     });
 
-    ref.onDispose(() => subscription.cancel());
-
-    return null; // Initial state
+    return null; // State will be updated by the listener
   }
 
   Future<void> updateProfile(Profile prof) async {
@@ -54,11 +88,8 @@ class CurrentProfile extends _$CurrentProfile {
           .from(AppConfig.tableProfiles)
           .update(prof.toJson())
           .eq('id', prof.id!);
-      // state will be automatically updated by the stream
     } catch (e) {
-      if (kDebugMode) {
-        print(e.toString());
-      }
+      if (kDebugMode) print('Update Profile Error: $e');
     }
   }
 
@@ -75,17 +106,10 @@ class CurrentProfile extends _$CurrentProfile {
 
   Future<void> logout(BuildContext context) async {
     try {
-      // Clear local data
       state = null;
-
-      // Logout from Supabase
       await client.auth.signOut();
-
-      // Navigation will be handled by UI layer
     } catch (e) {
-      if (kDebugMode) {
-        print(e.toString());
-      }
+      if (kDebugMode) print('Logout Error: $e');
     }
   }
 }
@@ -114,7 +138,7 @@ Stream<Profile?> profileById(ProfileByIdRef ref, String id) {
 /// Current User Stream Provider
 @riverpod
 Stream<Profile?> currentUserStream(CurrentUserStreamRef ref) {
-  final user = client.auth.currentUser;
+  final user = ref.watch(authNotifierProvider);
   if (user == null) return Stream.value(null);
 
   return client

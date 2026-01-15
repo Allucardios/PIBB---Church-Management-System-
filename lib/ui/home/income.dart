@@ -80,6 +80,7 @@ class IncomePage extends ConsumerWidget {
       floatingActionButton: PermitGate(
         value: 'Manager',
         child: FloatingActionButton(
+          heroTag: 'income_fab',
           onPressed: () => Navigator.of(
             context,
           ).push(MaterialPageRoute(builder: (_) => const IncomeForm())),

@@ -127,6 +127,7 @@ class _CategoryPageState extends ConsumerState<CategoryPage> {
         },
       ),
       floatingActionButton: FloatingActionButton(
+        heroTag: 'category_fab',
         onPressed: create,
         child: const Icon(Icons.add, color: Colors.white),
       ),

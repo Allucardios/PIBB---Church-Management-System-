@@ -27,6 +27,20 @@ class _SignInState extends ConsumerState<SignIn> {
   Widget build(BuildContext context) {
     final isLoading = ref.watch(authLoadingNotifierProvider);
     final errorMessage = ref.watch(authErrorNotifierProvider);
+
+    // Show SnackBar when error occurs
+    ref.listen(authErrorNotifierProvider, (prev, next) {
+      if (next.isNotEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(next),
+            backgroundColor: Colors.redAccent,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    });
+
     final size = MediaQuery.of(context).size;
 
     return Scaffold(

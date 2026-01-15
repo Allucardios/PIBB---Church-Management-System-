@@ -7,6 +7,7 @@ import '../../core/const/app_config.dart';
 import '../../core/const/functions.dart';
 import '../models/expense.dart';
 import '../models/income.dart';
+import '../providers/auth_provider.dart';
 
 part 'finance_provider.g.dart';
 
@@ -17,7 +18,13 @@ Stream<List<Income>> incomeStream(IncomeStreamRef ref) {
       .from(AppConfig.tableIncomes)
       .stream(primaryKey: ['id'])
       .order('date', ascending: false)
-      .map((rows) => rows.map((e) => Income.fromJson(e)).toList());
+      .map((rows) => rows.map((e) => Income.fromJson(e)).toList())
+      .handleError((err) {
+        if (err.toString().contains('invalidjwttoken') ||
+            err.toString().contains('JWT expired')) {
+          ref.read(authServiceProvider.notifier).signOut();
+        }
+      });
 }
 
 /// Expense List Stream Provider
@@ -27,7 +34,13 @@ Stream<List<Expense>> expenseStream(ExpenseStreamRef ref) {
       .from(AppConfig.tableExpenses)
       .stream(primaryKey: ['id'])
       .order('date', ascending: false)
-      .map((rows) => rows.map((e) => Expense.fromJson(e)).toList());
+      .map((rows) => rows.map((e) => Expense.fromJson(e)).toList())
+      .handleError((err) {
+        if (err.toString().contains('invalidjwttoken') ||
+            err.toString().contains('JWT expired')) {
+          ref.read(authServiceProvider.notifier).signOut();
+        }
+      });
 }
 
 /// Selected Month Provider

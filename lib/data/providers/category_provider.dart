@@ -6,6 +6,8 @@ import '../../core/const/app_config.dart';
 import '../../core/const/functions.dart';
 import '../models/category.dart';
 
+import '../providers/auth_provider.dart';
+
 part 'category_provider.g.dart';
 
 /// Categories Stream Provider
@@ -15,7 +17,13 @@ Stream<List<Categories>> categoriesStream(CategoriesStreamRef ref) {
       .from(AppConfig.tableCategory)
       .stream(primaryKey: ['id'])
       .order('name', ascending: true)
-      .map((rows) => rows.map((e) => Categories.fromJson(e)).toList());
+      .map((rows) => rows.map((e) => Categories.fromJson(e)).toList())
+      .handleError((err) {
+        if (err.toString().contains('invalidjwttoken') ||
+            err.toString().contains('JWT expired')) {
+          ref.read(authServiceProvider.notifier).signOut();
+        }
+      });
 }
 
 /// Category Service Provider

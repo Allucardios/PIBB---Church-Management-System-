@@ -73,11 +73,29 @@ class AuthService extends _$AuthService {
 
       await client.auth
           .signInWithPassword(email: email, password: password)
-          .then((event) {
+          .then((event) async {
+            // Check if user is active before proceeding
+            final profileData = await client
+                .from('profiles')
+                .select()
+                .eq('id', event.user!.id)
+                .single();
+            final isActive = profileData['active'] as bool? ?? false;
+
+            if (!isActive) {
+              await client.auth.signOut();
+              ref
+                  .read(authErrorNotifierProvider.notifier)
+                  .setError(
+                    'A tua conta está desativada. Contacta o administrador.',
+                  );
+              return;
+            }
+
             if (context.mounted) {
-              Navigator.of(
-                context,
-              ).pushReplacement(MaterialPageRoute(builder: (_) => HomePage()));
+              Navigator.of(context).pushReplacement(
+                MaterialPageRoute(builder: (_) => const HomePage()),
+              );
             }
           });
     } catch (e) {

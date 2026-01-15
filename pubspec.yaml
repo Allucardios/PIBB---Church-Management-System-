@@ -32,6 +32,10 @@ dev_dependencies:
 
 flutter_icons:
   android: true
+  ios: true
+  web:
+    generate: true
+    image_path: assets/icon.png
   image_path: assets/icon.png
   adaptive_icon_background: "#0E5F5A"
   adaptive_icon_foreground: assets/icon.png
