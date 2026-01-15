@@ -53,9 +53,14 @@ class _HomePageState extends ConsumerState<HomePage> {
       body: Row(
         children: [
           if (isDesktop)
-            SizedBox(
-              width: 300,
-              child: MyDrawer(currentPage: _page, onPageChanged: _goToPage),
+            Builder(
+              builder: (context) {
+                final width = MediaQuery.of(context).size.width;
+                return SizedBox(
+                  width: width * 0.25 > 300 ? 300 : width * 0.25,
+                  child: MyDrawer(currentPage: _page, onPageChanged: _goToPage),
+                );
+              },
             ),
           Expanded(
             child: IndexedStack(index: _page, children: _screens),

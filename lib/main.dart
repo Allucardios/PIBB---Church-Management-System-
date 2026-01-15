@@ -25,7 +25,18 @@ class MyApp extends StatelessWidget {
       title: AppConfig.appName,
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
-      builder: (context, child) => ConnectivityGate(child: child!),
+      builder: (context, child) {
+        final data = MediaQuery.of(context);
+        return MediaQuery(
+          data: data.copyWith(
+            textScaler: data.textScaler.clamp(
+              minScaleFactor: 1.0,
+              maxScaleFactor: 1.25,
+            ),
+          ),
+          child: ConnectivityGate(child: child!),
+        );
+      },
       home: const AuthGate(),
     );
   }
