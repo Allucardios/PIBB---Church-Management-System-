@@ -35,12 +35,22 @@ class _CategoryPageState extends ConsumerState<CategoryPage> {
           TextButton(
             onPressed: () async {
               if (nameController.text.trim().isNotEmpty) {
-                final cat = Categories(name: nameController.text.trim());
-                await ref
-                    .read(categoryServiceProvider.notifier)
-                    .addCategory(cat);
-                nameController.clear();
-                if (mounted) Navigator.pop(context);
+                final navigator = Navigator.of(context);
+                final scaffold = ScaffoldMessenger.of(context);
+
+                try {
+                  final cat = Categories(name: nameController.text.trim());
+                  await ref
+                      .read(categoryServiceProvider.notifier)
+                      .addCategory(cat);
+
+                  nameController.clear();
+                  navigator.pop();
+                } catch (e) {
+                  scaffold.showSnackBar(
+                    SnackBar(content: Text('Erro ao salvar: $e')),
+                  );
+                }
               }
             },
             child: const Text('Salvar'),

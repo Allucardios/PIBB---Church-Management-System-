@@ -9,6 +9,8 @@ import '../report/anual.dart';
 import '../report/month.dart';
 import '../report/quaterly.dart';
 
+import '../../core/widgets/responsive.dart';
+
 //enum
 enum PeriodType { mensal, trimestral, anual }
 
@@ -38,8 +40,13 @@ class _ReportPageState extends ConsumerState<ReportPage> {
 
   @override
   Widget build(BuildContext context) {
+    final isDesktop = Responsive.isDesktop(context);
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Relatório')),
+      appBar: AppBar(
+        title: const Text('Relatório'),
+        leading: isDesktop ? const SizedBox.shrink() : null,
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
           child: Form(

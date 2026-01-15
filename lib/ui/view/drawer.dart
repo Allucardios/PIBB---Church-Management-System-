@@ -25,111 +25,128 @@ class MyDrawer extends ConsumerWidget {
     final theme = Theme.of(context);
     final isDesktop = Responsive.isDesktop(context);
 
-    return Drawer(
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
-      child: SafeArea(
-        child: SingleChildScrollView(
+    // Use a unique key to prevent state issues when moving in the tree
+    final widgetKey = ValueKey('mydrawer_${isDesktop ? "desktop" : "mobile"}');
+
+    return Container(
+      key: widgetKey,
+      width: isDesktop
+          ? 300
+          : null, // Width is managed by Scaffold for mobile drawer
+      decoration: BoxDecoration(
+        color: theme.canvasColor,
+        border: isDesktop
+            ? Border(right: BorderSide(color: theme.dividerColor, width: 0.5))
+            : null,
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: SafeArea(
           child: Column(
             children: [
               SizedBox(
                 height: size.height * .15,
-                width: double.infinity,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Center(
-                      child: Image.asset(
-                        'assets/icon.png',
-                        height: size.height * .15,
+                child: Center(
+                  child: Image.asset(
+                    'assets/icon.png',
+                    height: size.height * .12,
+                  ),
+                ),
+              ),
+              Divider(color: theme.primaryColor.withOpacity(0.5), thickness: 1),
+
+              Expanded(
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      // Navigation for Desktop
+                      if (isDesktop && onPageChanged != null) ...[
+                        _listTile(
+                          function: () => onPageChanged!(0),
+                          title: 'Casa',
+                          subtitle: 'Dashboard Principal',
+                          icon: Icons.house_outlined,
+                          selected: currentPage == 0,
+                        ),
+                        _listTile(
+                          function: () => onPageChanged!(1),
+                          title: 'Receitas',
+                          subtitle: 'Gestão de Entradas',
+                          icon: Icons.monetization_on_outlined,
+                          selected: currentPage == 1,
+                        ),
+                        _listTile(
+                          function: () => onPageChanged!(2),
+                          title: 'Despesas',
+                          subtitle: 'Gestão de Saídas',
+                          icon: Icons.shopping_cart_outlined,
+                          selected: currentPage == 2,
+                        ),
+                        const Divider(),
+                      ],
+
+                      _listTile(
+                        function: () => Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => const ProfilePage(isAdmin: false),
+                          ),
+                        ),
+                        title: 'Meu Perfil',
+                        subtitle: 'Dados do Membro',
+                        icon: Icons.person_2_outlined,
                       ),
-                    ),
-                  ],
-                ),
-              ),
-              Divider(color: theme.primaryColor, thickness: 2),
-
-              // Navigation for Desktop
-              if (isDesktop && onPageChanged != null) ...[
-                _listTile(
-                  function: () => onPageChanged!(0),
-                  title: 'Casa',
-                  subtitle: 'Dashboard Principal',
-                  icon: Icons.house_outlined,
-                  selected: currentPage == 0,
-                ),
-                _listTile(
-                  function: () => onPageChanged!(1),
-                  title: 'Receitas',
-                  subtitle: 'Gestão de Entradas',
-                  icon: Icons.monetization_on_outlined,
-                  selected: currentPage == 1,
-                ),
-                _listTile(
-                  function: () => onPageChanged!(2),
-                  title: 'Despesas',
-                  subtitle: 'Gestão de Saídas',
-                  icon: Icons.shopping_cart_outlined,
-                  selected: currentPage == 2,
-                ),
-                const Divider(),
-              ],
-
-              _listTile(
-                function: () => Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => const ProfilePage(isAdmin: false),
+                      _listTile(
+                        function: () => Navigator.of(context).push(
+                          MaterialPageRoute(builder: (_) => const ReportPage()),
+                        ),
+                        title: 'Relatórios',
+                        subtitle: 'Gerar Relatório',
+                        icon: Icons.print_outlined,
+                      ),
+                      PermitGate(
+                        value: 'Admin',
+                        child: _listTile(
+                          function: () => Navigator.of(context).push(
+                            MaterialPageRoute(builder: (_) => const UserPage()),
+                          ),
+                          title: 'Usuarios',
+                          subtitle: 'Gerir Usuarios',
+                          icon: Icons.groups_outlined,
+                        ),
+                      ),
+                      PermitGate(
+                        value: 'Admin',
+                        child: _listTile(
+                          function: () => Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const CategoryPage(),
+                            ),
+                          ),
+                          title: 'Categoria',
+                          subtitle: 'Gerir Categorias',
+                          icon: Icons.category_outlined,
+                        ),
+                      ),
+                      _listTile(
+                        function: () async {
+                          final response = await showYesNoDialog(
+                            context: context,
+                            title: 'Terminar Sessão',
+                            message: 'Deseja terminar a Sessão?',
+                          );
+                          if (response) {
+                            await ref
+                                .read(currentProfileProvider.notifier)
+                                .logout(context);
+                          }
+                        },
+                        title: 'Sair',
+                        subtitle: 'Terminar Sessão',
+                        icon: Icons.logout,
+                      ),
+                    ],
                   ),
                 ),
-                title: 'Meu Perfil',
-                subtitle: 'Dados do Membro',
-                icon: Icons.person_2_outlined,
-              ),
-              _listTile(
-                function: () => Navigator.of(
-                  context,
-                ).push(MaterialPageRoute(builder: (_) => const ReportPage())),
-                title: 'Relatórios',
-                subtitle: 'Gerar Relatório',
-                icon: Icons.print_outlined,
-              ),
-              PermitGate(
-                value: 'Admin',
-                child: _listTile(
-                  function: () => Navigator.of(
-                    context,
-                  ).push(MaterialPageRoute(builder: (_) => const UserPage())),
-                  title: 'Usuarios',
-                  subtitle: 'Gerir Usuarios',
-                  icon: Icons.groups_outlined,
-                ),
-              ),
-              PermitGate(
-                value: 'Admin',
-                child: _listTile(
-                  function: () => Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => const CategoryPage()),
-                  ),
-                  title: 'Categoria',
-                  subtitle: 'Gerir Categorias',
-                  icon: Icons.category_outlined,
-                ),
-              ),
-              _listTile(
-                function: () async {
-                  final response = await showYesNoDialog(
-                    context: context,
-                    title: 'Terminar Sessão',
-                    message: 'Deseja terminar a Sessão?',
-                  );
-                  if (response) {
-                    await ref
-                        .read(currentProfileProvider.notifier)
-                        .logout(context);
-                  }
-                },
-                title: 'Sair',
-                subtitle: 'Terminar Sessão',
-                icon: Icons.logout,
               ),
             ],
           ),
@@ -148,21 +165,31 @@ class MyDrawer extends ConsumerWidget {
     return ListTile(
       onTap: function,
       selected: selected,
-      selectedTileColor: AppTheme.secondary.withOpacity(0.1),
+      selectedTileColor: AppTheme.primary.withOpacity(0.08),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       title: Text(
         title,
         style: TextStyle(
           fontSize: 14,
-          fontWeight: selected ? FontWeight.bold : FontWeight.normal,
+          fontWeight: selected ? FontWeight.bold : FontWeight.w500,
+          color: selected ? AppTheme.primary : null,
         ),
       ),
-      subtitle: Text(subtitle, style: const TextStyle(fontSize: 12)),
+      subtitle: Text(
+        subtitle,
+        style: const TextStyle(fontSize: 11, color: Colors.grey),
+      ),
       leading: Icon(
         icon,
-        color: selected ? AppTheme.primary : Colors.grey,
-        size: 25,
+        color: selected ? AppTheme.primary : Colors.grey.shade600,
+        size: 24,
       ),
-      trailing: const Icon(Icons.chevron_right, color: AppTheme.primary),
+      trailing: Icon(
+        Icons.chevron_right,
+        color: selected ? AppTheme.primary : Colors.grey.shade400,
+        size: 20,
+      ),
     );
   }
 }

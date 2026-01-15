@@ -89,8 +89,4 @@ class IncomePage extends ConsumerWidget {
       ),
     );
   }
-
-  Column d() {
-    return Column(mainAxisSize: MainAxisSize.min, children: []);
-  }
 }
