@@ -1,22 +1,28 @@
 import 'dart:typed_data';
 import 'package:app_pibb/core/const/functions.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 
-import '../../data/controllers/finance.dart';
 import '../../data/models/expense.dart';
 import '../../data/models/income.dart';
+import '../../data/providers/finance_provider.dart';
 
 class Report {
-  final ctrl = Get.find<FinanceCtrl>();
+  final List<Income> incomeList;
+  final List<Expense> expenseList;
   final int ref;
   final int year;
 
-  Report({required this.ref, required this.year});
+  Report({
+    required this.incomeList,
+    required this.expenseList,
+    required this.ref,
+    required this.year,
+  });
 
   String monthName(int m) {
     if (m < 1 || m > 12) throw ArgumentError('Mês inválido');
@@ -25,11 +31,11 @@ class Report {
 
   String get reference => '${monthName(ref)} de $year';
 
-  List<Income> get _monthIncomes => ctrl.incomeList
+  List<Income> get _monthIncomes => incomeList
       .where((i) => i.date.year == year && i.date.month == ref)
       .toList();
 
-  List<Expense> get expensesList => ctrl.expenseList
+  List<Expense> get expensesList => expenseList
       .where((e) => e.date.year == year && e.date.month == ref)
       .toList();
 
@@ -64,9 +70,15 @@ class Report {
     return map;
   }
 
-  double get income => ctrl.getMonthlyIncome(DateTime(year, ref));
-  double get expenses => ctrl.getMonthlyExpenses(DateTime(year, ref));
-  double get balance => ctrl.getMonthlyBalance(DateTime(year, ref));
+  double get income {
+    return _monthIncomes.fold(0.0, (sum, i) => sum + i.totalIncome());
+  }
+
+  double get expenses {
+    return expensesList.fold(0.0, (sum, e) => sum + e.amount);
+  }
+
+  double get balance => income - expenses;
 
   final _currency = NumberFormat.currency(locale: 'pt_AO', symbol: 'Kz');
 
@@ -75,23 +87,49 @@ class Report {
   String dateShort(DateTime d) => DateFormat('dd/MM/yy').format(d);
 }
 
-class MonthlyReportScreen extends StatelessWidget {
-  const MonthlyReportScreen({super.key, required this.report});
-  final Report report;
+class MonthlyReportScreen extends ConsumerWidget {
+  const MonthlyReportScreen({
+    super.key,
+    required this.month,
+    required this.year,
+  });
+
+  final int month;
+  final int year;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Observar streams de dados
+    final incomesAsync = ref.watch(incomeStreamProvider);
+    final expensesAsync = ref.watch(expenseStreamProvider);
+
+    // Verificar se os dados estão carregados
+    if (!incomesAsync.hasValue || !expensesAsync.hasValue) {
+      return Scaffold(
+        appBar: AppBar(title: Text('Carregando...')),
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    // Criar relatório com os dados
+    final report = Report(
+      incomeList: incomesAsync.value ?? [],
+      expenseList: expensesAsync.value ?? [],
+      ref: month,
+      year: year,
+    );
+
     return Scaffold(
       appBar: AppBar(title: Text(report.reference)),
       body: PdfPreview(
-        build: (format) => _generatePdf(),
+        build: (format) => _generatePdf(report),
         allowPrinting: true,
         allowSharing: true,
       ),
     );
   }
 
-  Future<Uint8List> _generatePdf() async {
+  Future<Uint8List> _generatePdf(Report report) async {
     final pdf = pw.Document();
     pdf.addPage(
       pw.MultiPage(
@@ -141,7 +179,7 @@ class MonthlyReportScreen extends StatelessWidget {
             style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold),
           ),
           pw.SizedBox(height: 8),
-          _buildIncomeTable(),
+          _buildIncomeTable(report),
           pw.SizedBox(height: 20),
 
           // Despesas do Mês
@@ -150,7 +188,7 @@ class MonthlyReportScreen extends StatelessWidget {
             style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold),
           ),
           pw.SizedBox(height: 8),
-          _buildExpenseTable(),
+          _buildExpenseTable(report),
           pw.SizedBox(height: 40),
           // Resumo Mensal
           pw.Text(
@@ -193,7 +231,7 @@ class MonthlyReportScreen extends StatelessWidget {
     return pdf.save();
   }
 
-  pw.Widget _buildIncomeTable() {
+  pw.Widget _buildIncomeTable(Report report) {
     final dates = report.incomeDates;
     final table = report.incomeTable;
 
@@ -242,7 +280,7 @@ class MonthlyReportScreen extends StatelessWidget {
     );
   }
 
-  pw.Widget _buildExpenseTable() {
+  pw.Widget _buildExpenseTable(Report report) {
     final expenses = report.expensesList;
 
     return pw.Table(

@@ -1,21 +1,21 @@
 // Libraries
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 // Local Imports
 import '../../core/const/functions.dart';
 import '../../core/const/theme.dart';
 import '../../core/widgets/admin_gate.dart';
-import '../../data/controllers/finance.dart';
 import '../../data/models/expense.dart';
+import '../form/expense.dart';
+import '../../data/providers/finance_provider.dart';
 
-class ViewExpense extends StatelessWidget {
+class ViewExpense extends ConsumerWidget {
   const ViewExpense({super.key, required this.exp});
   final Expense exp;
 
   @override
-  Widget build(BuildContext context) {
-    final ctrl = Get.find<FinanceCtrl>();
+  Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       appBar: AppBar(
         title: const Text("Detalhes da Despesa"),
@@ -24,17 +24,29 @@ class ViewExpense extends StatelessWidget {
           PermitGate(
             value: 'Manager',
             child: IconButton(
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => ExpenseForm(expense: exp)),
+              ),
+              icon: const Icon(Icons.edit_outlined, color: AppTheme.primary),
+            ),
+          ),
+          PermitGate(
+            value: 'Manager',
+            child: IconButton(
               onPressed: () async {
                 final confirmed = await showYesNoDialog(
+                  context: context,
                   title: "Confirmação",
                   message: "Tem certeza que deseja apagar este item?",
                 );
                 if (confirmed) {
-                  ctrl.deleteExpense(exp.id!);
-                  Get.back();
+                  await ref
+                      .read(financeServiceProvider.notifier)
+                      .deleteExpense(exp.id!);
+                  if (context.mounted) Navigator.of(context).pop();
                 }
               },
-              icon: Icon(Icons.delete_outline, color: Colors.redAccent),
+              icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
             ),
           ),
         ],
@@ -57,13 +69,16 @@ class ViewExpense extends StatelessWidget {
       elevation: 3,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: ListTile(
-        leading: Icon(
+        leading: const Icon(
           Icons.calendar_month_outlined,
           size: 40,
           color: AppTheme.primary,
         ),
-        title: Text(formatDate(exp.date), style: TextStyle(fontSize: 16)),
-        subtitle: Text("Registro Nº ${exp.id}", style: TextStyle(fontSize: 14)),
+        title: Text(formatDate(exp.date), style: const TextStyle(fontSize: 16)),
+        subtitle: Text(
+          "Registro Nº ${exp.id}",
+          style: const TextStyle(fontSize: 14),
+        ),
       ),
     );
   }
@@ -77,7 +92,11 @@ class ViewExpense extends StatelessWidget {
         children: [
           Wrap(
             children: [
-              _valueTile("Descrição", exp.obs!, Icons.description_outlined),
+              _valueTile(
+                "Descrição",
+                exp.obs ?? '',
+                Icons.description_outlined,
+              ),
               _valueTile("Categoria", exp.category, Icons.category_outlined),
               _valueTile(
                 "Tipo de Movimento",

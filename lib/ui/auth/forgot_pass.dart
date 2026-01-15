@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 
 import '../../core/const/functions.dart';
 import '../../core/widgets/email_tf.dart';
@@ -32,7 +31,10 @@ class _ForgotPageState extends State<ForgotPage> {
               'Foi enviado um token de reset de palavra passe para o seu email',
             ),
             actions: [
-              TextButton(onPressed: () => Get.back(), child: Text('Cancelar')),
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: Text('Cancelar'),
+              ),
               TextButton(onPressed: () {}, child: Text('Continuar')),
             ],
           ),

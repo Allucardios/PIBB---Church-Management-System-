@@ -1,21 +1,19 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 //
 import 'core/const/app_config.dart';
 import 'core/const/theme.dart';
 import 'core/widgets/auth_gate.dart';
-import 'data/service/bindings.dart';
+
+import 'core/widgets/connectivity_gate.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initializeDateFormatting('pt_PT', null);
-  await Supabase.initialize(
-    url: AppConfig.url,
-    anonKey: AppConfig.anonKey,
-  );
-  runApp(const MyApp());
+  await Supabase.initialize(url: AppConfig.url, anonKey: AppConfig.anonKey);
+  runApp(const ProviderScope(child: MyApp()));
 }
 
 class MyApp extends StatelessWidget {
@@ -23,12 +21,12 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GetMaterialApp(
+    return MaterialApp(
       title: AppConfig.appName,
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
-      home: AuthGate(),
-      initialBinding: AppBinding(),
+      builder: (context, child) => ConnectivityGate(child: child!),
+      home: const AuthGate(),
     );
   }
 }

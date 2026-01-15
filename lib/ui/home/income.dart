@@ -1,55 +1,91 @@
 // Libraries
-
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 // Local Imports
 import '../../core/widgets/admin_gate.dart';
-import '../../data/controllers/finance.dart';
-import '../../data/models/income.dart';
+import '../../data/providers/auth_provider.dart';
+import '../../data/providers/finance_provider.dart';
 import '../card/income.dart';
 import '../form/income.dart';
 import '../view/drawer.dart';
+import '../../core/widgets/responsive.dart';
 
-class IncomePage extends StatefulWidget {
+class IncomePage extends ConsumerWidget {
   const IncomePage({super.key});
 
   @override
-  State<IncomePage> createState() => _IncomePageState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final incomesAsync = ref.watch(incomeStreamProvider);
+    final isDesktop = Responsive.isDesktop(context);
 
-class _IncomePageState extends State<IncomePage> {
-  @override
-  Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: Text('Receitas')),
-    drawer: MyDrawer(),
-    body: SafeArea(
-      child: StreamBuilder<List<Income>>(
-        stream: FinanceCtrl().streamIncomes(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator());
-          }
-
-          if (!snapshot.hasData) {
-            return Center(child: Text('Sem dados'));
-          }
-
-          final map = snapshot.data!;
-
-          return ListView.builder(
-            itemCount: map.length,
-            itemBuilder: (context, index) => CardIncome(inc: map[index]),
-          );
-        },
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Receitas'),
+        leading: isDesktop ? const SizedBox.shrink() : null,
       ),
-    ),
-    floatingActionButton: PermitGate(
-      value: 'Manager',
-      child: FloatingActionButton(
-        onPressed: () => Get.to(() => IncomeForm()),
-        child: Icon(Icons.add),
+      drawer: isDesktop ? null : const MyDrawer(),
+      body: SafeArea(
+        child: incomesAsync.when(
+          data: (incomes) {
+            if (incomes.isEmpty) {
+              return const Center(child: Text('Sem dados'));
+            }
+
+            return Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Responsive(
+                mobile: ListView.builder(
+                  itemCount: incomes.length,
+                  itemBuilder: (context, index) =>
+                      CardIncome(inc: incomes[index]),
+                ),
+                tablet: GridView.builder(
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    childAspectRatio: 1.5,
+                    crossAxisSpacing: 10,
+                    mainAxisSpacing: 10,
+                  ),
+                  itemCount: incomes.length,
+                  itemBuilder: (context, index) =>
+                      CardIncome(inc: incomes[index]),
+                ),
+                desktop: GridView.builder(
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 4,
+                    childAspectRatio: 1.5,
+                    crossAxisSpacing: 10,
+                    mainAxisSpacing: 10,
+                  ),
+                  itemCount: incomes.length,
+                  itemBuilder: (context, index) =>
+                      CardIncome(inc: incomes[index]),
+                ),
+              ),
+            );
+          },
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (error, _) {
+            if (error.toString().contains('invalidjwttoken')) {
+              Future.microtask(
+                () => ref.read(authServiceProvider.notifier).signOut(),
+              );
+              return const Center(child: Text('Sessão expirada.'));
+            }
+            return Center(child: Text('Erro: $error'));
+          },
+        ),
       ),
-    ),
-  );
+      floatingActionButton: PermitGate(
+        value: 'Manager',
+        child: FloatingActionButton(
+          onPressed: () => Navigator.of(
+            context,
+          ).push(MaterialPageRoute(builder: (_) => const IncomeForm())),
+          child: const Icon(Icons.add),
+        ),
+      ),
+    );
+  }
 }

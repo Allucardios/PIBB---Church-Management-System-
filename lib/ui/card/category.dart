@@ -1,42 +1,35 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/const/theme.dart';
-import '../../data/controllers/category.dart';
 import '../../data/models/category.dart';
+import '../../data/providers/category_provider.dart';
 
-class CategoryCard extends StatefulWidget {
+class CategoryCard extends ConsumerWidget {
   const CategoryCard({super.key, required this.cat});
   final Categories cat;
 
-  @override
-  State<CategoryCard> createState() => _CategoryCardState();
-}
-
-class _CategoryCardState extends State<CategoryCard> {
-  final ctrl = Get.find<CategoryCtrl>();
-  final name = TextEditingController();
-  final key = GlobalKey<FormState>();
-
-  void delete(Categories cat) {
+  void delete(BuildContext context, WidgetRef ref, Categories cat) {
     showDialog(
       context: context,
-      builder: (_) => AlertDialog(
-        title: Text('Eliminar Categoria'),
+      builder: (context) => AlertDialog(
+        title: const Text('Eliminar Categoria'),
+        content: Text('Deseja realmente eliminar a categoria "${cat.name}"?'),
         actions: [
           TextButton(
             onPressed: () {
-              name.clear();
-              Get.back();
+              Navigator.of(context).pop();
             },
-            child: Text('Cancelar'),
+            child: const Text('Cancelar'),
           ),
           TextButton(
-            onPressed: () {
-              ctrl.deleteCat(cat);
-              Get.back();
+            onPressed: () async {
+              await ref
+                  .read(categoryServiceProvider.notifier)
+                  .deleteCategory(cat.id!);
+              if (context.mounted) Navigator.of(context).pop();
             },
-            child: Text('Eliminar'),
+            child: const Text('Eliminar', style: TextStyle(color: Colors.red)),
           ),
         ],
       ),
@@ -44,23 +37,24 @@ class _CategoryCardState extends State<CategoryCard> {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Card(
       elevation: 3,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: ListTile(
         leading: Container(
-          padding: EdgeInsets.all(3),
-            decoration: BoxDecoration(
-              color: AppTheme.secondary,
-              borderRadius: BorderRadius.circular(50),
-            ),
-            child: Icon(Icons.category_outlined, color: AppTheme.primary)),
-        title: Text(widget.cat.name),
-        subtitle: Text("Categoria"),
+          padding: const EdgeInsets.all(3),
+          decoration: BoxDecoration(
+            color: AppTheme.secondary,
+            borderRadius: BorderRadius.circular(50),
+          ),
+          child: const Icon(Icons.category_outlined, color: AppTheme.primary),
+        ),
+        title: Text(cat.name),
+        subtitle: const Text("Categoria"),
         trailing: IconButton(
-          onPressed: () => delete(widget.cat),
-          icon: Icon(Icons.delete_outline, color: Colors.redAccent),
+          onPressed: () => delete(context, ref, cat),
+          icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
         ),
       ),
     );

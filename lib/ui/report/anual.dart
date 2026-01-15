@@ -1,21 +1,26 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 
 import '../../core/const/functions.dart';
-import '../../data/controllers/finance.dart';
 import '../../data/models/expense.dart';
 import '../../data/models/income.dart';
+import '../../data/providers/finance_provider.dart';
 
 class AnnualReport {
-  final ctrl = Get.find<FinanceCtrl>();
+  final List<Income> incomeList;
+  final List<Expense> expenseList;
   final int year;
 
-  AnnualReport({required this.year});
+  AnnualReport({
+    required this.incomeList,
+    required this.expenseList,
+    required this.year,
+  });
 
   String get reference => 'Ano de $year';
 
@@ -27,23 +32,23 @@ class AnnualReport {
   }
 
   List<Income> getMonthIncomes(int month) {
-    return ctrl.incomeList
+    return incomeList
         .where((i) => i.date.year == year && i.date.month == month)
         .toList();
   }
 
   List<Expense> getMonthExpenses(int month) {
-    return ctrl.expenseList
+    return expenseList
         .where((e) => e.date.year == year && e.date.month == month)
         .toList();
   }
 
   double getMonthlyIncome(int month) {
-    return ctrl.getMonthlyIncome(DateTime(year, month));
+    return getMonthIncomes(month).fold(0.0, (sum, i) => sum + i.totalIncome());
   }
 
   double getMonthlyExpenses(int month) {
-    return ctrl.getMonthlyExpenses(DateTime(year, month));
+    return getMonthExpenses(month).fold(0.0, (sum, e) => sum + e.amount);
   }
 
   double getMonthlyBalance(int month) {
@@ -64,7 +69,7 @@ class AnnualReport {
   Map<String, double> get expensesByCategory {
     final Map<String, double> categoryTotals = {};
 
-    for (final expense in ctrl.expenseList.where((e) => e.date.year == year)) {
+    for (final expense in expenseList.where((e) => e.date.year == year)) {
       categoryTotals[expense.category] =
           (categoryTotals[expense.category] ?? 0) + expense.amount;
     }
@@ -81,7 +86,7 @@ class AnnualReport {
         special = 0,
         other = 0;
 
-    for (final income in ctrl.incomeList.where((i) => i.date.year == year)) {
+    for (final income in incomeList.where((i) => i.date.year == year)) {
       tithes += income.tithes;
       offerings += income.offerings;
       missions += income.missions;
@@ -105,24 +110,42 @@ class AnnualReport {
   String money(double v) => _currency.format(v);
 }
 
-class AnnualReportScreen extends StatelessWidget {
-  final AnnualReport report;
-  const AnnualReportScreen({super.key, required this.report});
+class AnnualReportScreen extends ConsumerWidget {
+  final int year;
+  const AnnualReportScreen({super.key, required this.year});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final incomesAsync = ref.watch(incomeStreamProvider);
+    final expensesAsync = ref.watch(expenseStreamProvider);
+
+    if (incomesAsync.isLoading || expensesAsync.isLoading) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Relatório Anual')),
+        body: const Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    final incomeList = incomesAsync.value ?? [];
+    final expenseList = expensesAsync.value ?? [];
+
+    final report = AnnualReport(
+      incomeList: incomeList,
+      expenseList: expenseList,
+      year: year,
+    );
+
     return Scaffold(
       appBar: AppBar(title: const Text('Relatório Anual')),
       body: PdfPreview(
-        build: (format) => _generatePdf(),
+        build: (format) => _generatePdf(report),
         allowPrinting: true,
         allowSharing: true,
-
       ),
     );
   }
 
-  Future<Uint8List> _generatePdf() async {
+  Future<Uint8List> _generatePdf(AnnualReport report) async {
     final pdf = pw.Document();
 
     pdf.addPage(
@@ -173,7 +196,7 @@ class AnnualReportScreen extends StatelessWidget {
             style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold),
           ),
           pw.SizedBox(height: 12),
-          _buildMonthlySummary(),
+          _buildMonthlySummary(report),
           pw.SizedBox(height: 30),
 
           // RECEITAS POR TIPO
@@ -182,7 +205,7 @@ class AnnualReportScreen extends StatelessWidget {
             style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold),
           ),
           pw.SizedBox(height: 12),
-          _buildIncomesByType(),
+          _buildIncomesByType(report),
           pw.SizedBox(height: 30),
 
           // DESPESAS POR CATEGORIA
@@ -191,7 +214,7 @@ class AnnualReportScreen extends StatelessWidget {
             style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold),
           ),
           pw.SizedBox(height: 12),
-          _buildExpensesByCategory(),
+          _buildExpensesByCategory(report),
           pw.SizedBox(height: 30),
 
           // RESUMO GERAL DO ANO
@@ -235,7 +258,7 @@ class AnnualReportScreen extends StatelessWidget {
     return pdf.save();
   }
 
-  pw.Widget _buildMonthlySummary() {
+  pw.Widget _buildMonthlySummary(AnnualReport report) {
     return pw.Table(
       border: pw.TableBorder.all(color: PdfColors.black, width: 0.5),
       children: [
@@ -282,7 +305,7 @@ class AnnualReportScreen extends StatelessWidget {
     );
   }
 
-  pw.Widget _buildIncomesByType() {
+  pw.Widget _buildIncomesByType(AnnualReport report) {
     final incomes = report.incomesByType;
     final entries = incomes.entries.where((e) => e.value > 0).toList();
 
@@ -329,7 +352,7 @@ class AnnualReportScreen extends StatelessWidget {
     );
   }
 
-  pw.Widget _buildExpensesByCategory() {
+  pw.Widget _buildExpensesByCategory(AnnualReport report) {
     final expenses = report.expensesByCategory;
     final entries = expenses.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));

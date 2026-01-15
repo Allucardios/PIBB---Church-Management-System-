@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 
 import '../const/theme.dart';
 
@@ -11,6 +10,11 @@ class EmailTextField extends StatelessWidget {
   });
   final TextEditingController controller;
   final String hint;
+
+  // Email validation regex
+  static final _emailRegex = RegExp(
+    r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -36,7 +40,7 @@ class EmailTextField extends StatelessWidget {
             if (value == null || value.isEmpty) {
               return 'Preencha o email';
             }
-            if (!GetUtils.isEmail(value)) {
+            if (!_emailRegex.hasMatch(value)) {
               return 'Email inválido';
             }
             return null;
@@ -49,7 +53,7 @@ class EmailTextField extends StatelessWidget {
             focusColor: Colors.redAccent,
             filled: true,
             fillColor: Colors.white,
-            prefixIcon: Icon(Icons.email_outlined, color: AppTheme.primary,),
+            prefixIcon: Icon(Icons.email_outlined, color: AppTheme.primary),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide(color: Colors.white),

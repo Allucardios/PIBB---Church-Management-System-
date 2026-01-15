@@ -1,6 +1,6 @@
 // Libraries
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 // Local Imports
 import '../../core/const/functions.dart';
@@ -8,24 +8,21 @@ import '../../core/const/theme.dart';
 import '../../core/widgets/drop_tf.dart';
 import '../../core/widgets/money_tf.dart';
 import '../../core/widgets/textfield.dart';
-import '../../data/controllers/category.dart';
-import '../../data/controllers/finance.dart';
 import '../../data/models/expense.dart';
+import '../../data/providers/category_provider.dart';
+import '../../data/providers/finance_provider.dart';
 
-class ExpenseForm extends StatefulWidget {
-  const ExpenseForm({super.key});
+class ExpenseForm extends ConsumerStatefulWidget {
+  const ExpenseForm({super.key, this.expense});
+  final Expense? expense;
 
   @override
-  State<ExpenseForm> createState() => _ExpenseFormState();
+  ConsumerState<ExpenseForm> createState() => _ExpenseFormState();
 }
 
-class _ExpenseFormState extends State<ExpenseForm> {
+class _ExpenseFormState extends ConsumerState<ExpenseForm> {
   // Variables
   late DateTime _date;
-
-  // Controllers
-  final ctrl = Get.find<FinanceCtrl>();
-  final getCtrl = Get.find<CategoryCtrl>();
 
   // TextControllers
   final date = TextEditingController();
@@ -36,6 +33,7 @@ class _ExpenseFormState extends State<ExpenseForm> {
   final _key = GlobalKey<FormState>();
 
   Expense _doc() => Expense(
+    id: widget.expense?.id,
     category: cat.text,
     amount: toDouble(amount.text),
     date: _date,
@@ -46,13 +44,37 @@ class _ExpenseFormState extends State<ExpenseForm> {
   @override
   void initState() {
     super.initState();
-    _date = DateTime.now();
+    if (widget.expense != null) {
+      _date = widget.expense!.date;
+      cat.text = widget.expense!.category;
+      amount.text = widget.expense!.amount.toString();
+      origin.text = widget.expense!.originType;
+      obs.text = widget.expense!.obs ?? '';
+    } else {
+      _date = DateTime.now();
+    }
+    date.text = formatDate(_date);
+  }
+
+  @override
+  void dispose() {
+    date.dispose();
+    cat.dispose();
+    amount.dispose();
+    origin.dispose();
+    obs.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final categoriesAsync = ref.watch(categoriesStreamProvider);
+    final isEditing = widget.expense != null;
+
     return Scaffold(
-      appBar: AppBar(title: Text('Nova Despesa')),
+      appBar: AppBar(
+        title: Text(isEditing ? 'Editar Despesa' : 'Nova Despesa'),
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
           child: Form(
@@ -69,27 +91,26 @@ class _ExpenseFormState extends State<ExpenseForm> {
                     icon: Icons.monetization_on_outlined,
                     label: 'Descrição',
                   ),
-                  Obx(() {
-                    final categories = getCtrl.categories;
-                    final List<String> cats = [];
+                  categoriesAsync.when(
+                    data: (categories) {
+                      final list = categories.map((c) => c.name).toList()
+                        ..sort(
+                          (a, b) => a.toLowerCase().compareTo(b.toLowerCase()),
+                        );
 
-                    for (var cat in categories) {
-                      cats.add(cat.name);
-                    }
-
-                    final List<String> list = List.from(cats)
-                      ..sort(
-                        (a, b) => a.toLowerCase().compareTo(b.toLowerCase()),
+                      return DropDownTextField(
+                        ctrl: cat,
+                        label: 'Categoria',
+                        list: list,
+                        icon: Icons.category_outlined,
+                        hint: 'Selecione uma Categoria',
                       );
-
-                    return DropDownTextField(
-                      ctrl: cat,
-                      label: 'Categoria',
-                      list: list,
-                      icon: Icons.category_outlined,
-                      hint: 'Selecione uma Categoria',
-                    );
-                  }),
+                    },
+                    loading: () =>
+                        const Center(child: CircularProgressIndicator()),
+                    error: (error, _) =>
+                        Text('Erro ao carregar categorias: $error'),
+                  ),
                   NumberTextField(
                     controller: amount,
                     hint: 'Digite a Quantia',
@@ -99,22 +120,30 @@ class _ExpenseFormState extends State<ExpenseForm> {
                   DropDownTextField(
                     ctrl: origin,
                     label: 'Origem ',
-                    list: ['Numerario', 'Transferencia'],
+                    list: const ['Numerario', 'Transferencia'],
                     icon: Icons.account_balance_outlined,
                     hint: 'Selecione a Origem',
                   ),
                   Padding(
                     padding: const EdgeInsets.all(12),
                     child: ElevatedButton(
-                      onPressed: () {
+                      onPressed: () async {
                         if (_key.currentState!.validate()) {
-                          ctrl.addExpense(_doc());
-                          Get.back();
+                          if (isEditing) {
+                            await ref
+                                .read(financeServiceProvider.notifier)
+                                .updateExpense(_doc());
+                          } else {
+                            await ref
+                                .read(financeServiceProvider.notifier)
+                                .addExpense(_doc());
+                          }
+                          if (mounted) Navigator.of(context).pop();
                         }
                       },
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 40),
-                        child: Text('Adicionar'),
+                        child: Text(isEditing ? 'Guardar' : 'Adicionar'),
                       ),
                     ),
                   ),
@@ -131,7 +160,7 @@ class _ExpenseFormState extends State<ExpenseForm> {
     crossAxisAlignment: CrossAxisAlignment.start,
     spacing: 0,
     children: [
-      Text(
+      const Text(
         'Data',
         style: TextStyle(
           fontSize: 16,
@@ -143,7 +172,7 @@ class _ExpenseFormState extends State<ExpenseForm> {
       TextFormField(
         controller: date,
         readOnly: true,
-        style: TextStyle(color: Colors.black, fontSize: 16),
+        style: const TextStyle(color: Colors.black, fontSize: 16),
         validator: (value) {
           if (_date.isAfter(DateTime.now())) {
             return "A data não pode ser superior ao dia de hoje";
@@ -167,17 +196,17 @@ class _ExpenseFormState extends State<ExpenseForm> {
           focusColor: Colors.redAccent,
           filled: true,
           fillColor: Colors.white,
-          prefixIcon: Icon(
+          prefixIcon: const Icon(
             Icons.calendar_month_outlined,
             color: AppTheme.primary,
           ),
-          suffixIcon: Icon(
+          suffixIcon: const Icon(
             Icons.chevron_right_outlined,
             color: AppTheme.primary,
           ),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: Colors.white),
+            borderSide: const BorderSide(color: Colors.white),
           ),
         ),
       ),

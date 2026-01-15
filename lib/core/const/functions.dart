@@ -1,7 +1,9 @@
-import 'package:app_pibb/core/const/theme.dart';
+//Libraries
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+
+//Local Imports
+import 'theme.dart';
 
 const months = [
   'Janeiro',
@@ -21,16 +23,18 @@ const months = [
 void errorDialog(BuildContext context, String title, String sms, Color cor) {
   showDialog(
     context: context,
-    builder: (_) => AlertDialog(
-      title: Text(title),
-      content: Text(sms),
-      actions: [
-        TextButton(
-          onPressed: () => Get.back(),
-          child: Text('Cancelar', style: TextStyle(color: Colors.redAccent)),
+    builder: (_) =>
+        AlertDialog(
+          title: Text(title),
+          content: Text(sms),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(
+                  'Cancelar', style: TextStyle(color: Colors.redAccent)),
+            ),
+          ],
         ),
-      ],
-    ),
   );
 }
 
@@ -57,7 +61,8 @@ String formatDate(DateTime date) {
   ];
 
   final weekdayName = weekdays[date.weekday - 1];
-  return "$weekdayName, ${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}";
+  return "$weekdayName, ${date.day.toString().padLeft(2, '0')}/${date.month
+      .toString().padLeft(2, '0')}/${date.year}";
 }
 
 String formatDateComplete(DateTime date) {
@@ -72,11 +77,14 @@ String formatDateComplete(DateTime date) {
   ];
 
   final weekdayName = weekdays[date.weekday - 1];
-  return "$weekdayName, ${date.day.toString().padLeft(2, '0')} de ${months[date.month - 1]} de ${date.year}";
+  return "$weekdayName, ${date.day.toString().padLeft(2, '0')} de ${months[date
+      .month - 1]} de ${date.year}";
 }
 
 String formatDateTF(DateTime date) {
-  return " ${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}";
+  return " ${date.day.toString().padLeft(2, '0')}/${date.month
+      .toString()
+      .padLeft(2, '0')}/${date.year}";
 }
 
 String formatKwanza(double value) {
@@ -108,24 +116,37 @@ double toDouble(String? value) {
 }
 
 Future<bool> showYesNoDialog({
+  required BuildContext context,
   required String title,
   required String message,
 }) async {
-  final result = await Get.defaultDialog<bool>(
-    title: title,
-    middleText: message,
-    buttonColor: AppTheme.primary,
-    textCancel: 'Não',
-    textConfirm: 'Sim',
-    cancelTextColor: Colors.redAccent,
-    onConfirm: () => Get.back(result: true),
+  final result = await showDialog<bool>(
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: Text(title),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text('Não', style: TextStyle(color: Colors.redAccent)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: TextButton.styleFrom(backgroundColor: AppTheme.primary),
+            child: Text('Sim', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      );
+    },
   );
 
   return result ?? false;
 }
 
 final client = Supabase.instance.client;
-final uid = client.auth.currentUser!.id;
+
+String get uid => client.auth.currentUser!.id;
 
 String monthName(int month) {
   if (month < 1 || month > 12) {
@@ -153,3 +174,6 @@ int toInt(String? value) {
     return 0;
   }
 }
+
+void getTo(context, route) =>
+    Navigator.of(context).push(MaterialPageRoute(builder: (_) => route));

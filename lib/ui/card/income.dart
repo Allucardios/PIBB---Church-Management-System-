@@ -1,6 +1,5 @@
 // Libraries
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 
 // Local Imports
 import '../../../core/const/functions.dart';
@@ -19,14 +18,16 @@ class CardIncome extends StatelessWidget {
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: ListTile(
-        onTap: () => Get.to(() => ViewIncome(inc: inc)),
-        leading: Icon(Icons.monetization_on_outlined, color: AppTheme.primary),
+        onTap: () => Navigator.of(
+          context,
+        ).push(MaterialPageRoute(builder: (_) => ViewIncome(inc: inc))),
+        leading: const Icon(
+          Icons.monetization_on_outlined,
+          color: AppTheme.primary,
+        ),
         title: Text(
           formatDate(inc.date),
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 16,
-          ),
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
         ),
         subtitle: Text(
           "Total: ${formatKwanza(inc.totalIncome())}",

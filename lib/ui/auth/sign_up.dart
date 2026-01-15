@@ -1,24 +1,23 @@
 // Libraries
 import 'package:app_pibb/ui/auth/sign_in.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 // Local Imports
 import '../../core/widgets/email_tf.dart';
 import '../../core/widgets/pass_tf.dart';
 import '../../core/widgets/textfield.dart';
-import '../../data/controllers/auth.dart';
+import '../../data/providers/auth_provider.dart';
 
-class SignUp extends StatefulWidget {
+class SignUp extends ConsumerStatefulWidget {
   const SignUp({super.key});
 
   @override
-  State<SignUp> createState() => _SignUpState();
+  ConsumerState<SignUp> createState() => _SignUpState();
 }
 
-class _SignUpState extends State<SignUp> {
+class _SignUpState extends ConsumerState<SignUp> {
   //Controllers
-  final auth = Get.find<AuthCtrl>();
   final _email = TextEditingController();
   final _name = TextEditingController();
   final _pass = TextEditingController();
@@ -35,10 +34,10 @@ class _SignUpState extends State<SignUp> {
 
     if (_key.currentState!.validate()) {
       if (conf == pass) {
-        await auth.signUp(name, email, pass);
+        await ref.read(authServiceProvider.notifier).signUp(name, email, pass);
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
+          const SnackBar(
             showCloseIcon: true,
             closeIconColor: Colors.white,
             content: Text(
@@ -54,10 +53,13 @@ class _SignUpState extends State<SignUp> {
 
   @override
   Widget build(BuildContext context) {
+    final isLoading = ref.watch(authLoadingNotifierProvider);
+    final errorMessage = ref.watch(authErrorNotifierProvider);
+
     return Scaffold(
-      appBar: AppBar(title: Text('Criar Conta'), centerTitle: true),
+      appBar: AppBar(title: const Text('Criar Conta'), centerTitle: true),
       body: SingleChildScrollView(
-        physics: AlwaysScrollableScrollPhysics(),
+        physics: const AlwaysScrollableScrollPhysics(),
         child: Column(
           children: [
             Padding(
@@ -95,50 +97,42 @@ class _SignUpState extends State<SignUp> {
             ),
             const SizedBox(height: 24),
             // Error Message
-            Obx(() {
-              if (auth.errorMessage.value.isNotEmpty) {
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 16),
-                  child: Text(
-                    auth.errorMessage.value,
-                    style: const TextStyle(color: Colors.red),
-                    textAlign: TextAlign.center,
-                  ),
-                );
-              }
-              return const SizedBox.shrink();
-            }),
-            // Sign Up Button
-            Obx(() {
-              return Padding(
-                padding: const EdgeInsets.all(20),
-                child: SizedBox(
-                  width: double.infinity,
-                  height: 50,
-                  child: ElevatedButton(
-                    onPressed: auth.isLoading.value
-                        ? null
-                        : () async => _signUp(),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue.shade900,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: auth.isLoading.value
-                        ? const CircularProgressIndicator(color: Colors.white)
-                        : const Text(
-                            'Criar Conta',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                          ),
-                  ),
+            if (errorMessage.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 16),
+                child: Text(
+                  errorMessage,
+                  style: const TextStyle(color: Colors.red),
+                  textAlign: TextAlign.center,
                 ),
-              );
-            }),
+              ),
+            // Sign Up Button
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: ElevatedButton(
+                  onPressed: isLoading ? null : () async => _signUp(),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue.shade900,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: isLoading
+                      ? const CircularProgressIndicator(color: Colors.white)
+                      : const Text(
+                          'Criar Conta',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                ),
+              ),
+            ),
 
             const SizedBox(height: 16),
 
@@ -151,7 +145,10 @@ class _SignUpState extends State<SignUp> {
                   style: TextStyle(color: Colors.grey.shade600),
                 ),
                 TextButton(
-                  onPressed: () => Get.offAll(() => SignIn()),
+                  onPressed: () => Navigator.of(context).pushAndRemoveUntil(
+                    MaterialPageRoute(builder: (_) => const SignIn()),
+                    (route) => false,
+                  ),
                   child: Text(
                     'Entrar',
                     style: TextStyle(

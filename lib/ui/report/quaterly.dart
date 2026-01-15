@@ -1,7 +1,7 @@
 // Libraries
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
@@ -9,20 +9,24 @@ import 'package:printing/printing.dart';
 
 // Local Imports
 import '../../core/const/functions.dart';
-import '../../data/controllers/finance.dart';
 import '../../data/models/expense.dart';
 import '../../data/models/income.dart';
+import '../../data/providers/finance_provider.dart';
 
 class QuarterReport {
-  final ctrl = Get.find<FinanceCtrl>();
+  final List<Income> incomeList;
+  final List<Expense> expenseList;
   final int quarter;
   final int year;
 
-  QuarterReport({required this.quarter, required this.year}) {
+  QuarterReport({
+    required this.incomeList,
+    required this.expenseList,
+    required this.quarter,
+    required this.year,
+  }) {
     if (quarter < 1 || quarter > 4) {
-      throw ArgumentError(
-        'Trimestre deve ser entre 1 e 4. Recebido: $quarter (tipo: ${quarter.runtimeType})',
-      );
+      throw ArgumentError('Trimestre deve ser entre 1 e 4. Recebido: $quarter');
     }
   }
 
@@ -47,13 +51,13 @@ class QuarterReport {
   }
 
   List<Income> getMonthIncomes(int month) {
-    return ctrl.incomeList
+    return incomeList
         .where((i) => i.date.year == year && i.date.month == month)
         .toList();
   }
 
   List<Expense> getMonthExpenses(int month) {
-    return ctrl.expenseList
+    return expenseList
         .where((e) => e.date.year == year && e.date.month == month)
         .toList();
   }
@@ -90,11 +94,11 @@ class QuarterReport {
   }
 
   double getMonthlyIncome(int month) {
-    return ctrl.getMonthlyIncome(DateTime(year, month));
+    return getMonthIncomes(month).fold(0.0, (sum, i) => sum + i.totalIncome());
   }
 
   double getMonthlyExpenses(int month) {
-    return ctrl.getMonthlyExpenses(DateTime(year, month));
+    return getMonthExpenses(month).fold(0.0, (sum, e) => sum + e.amount);
   }
 
   double get quarterIncome {
@@ -113,23 +117,48 @@ class QuarterReport {
   String date(DateTime d) => DateFormat('dd/MM/yy').format(d);
 }
 
-class QuarterlyReportScreen extends StatelessWidget {
-  final QuarterReport report;
-  const QuarterlyReportScreen({super.key, required this.report});
+class QuarterlyReportScreen extends ConsumerWidget {
+  final int quarter;
+  final int year;
+  const QuarterlyReportScreen({
+    super.key,
+    required this.quarter,
+    required this.year,
+  });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final incomesAsync = ref.watch(incomeStreamProvider);
+    final expensesAsync = ref.watch(expenseStreamProvider);
+
+    if (incomesAsync.isLoading || expensesAsync.isLoading) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Relatório Trimestral')),
+        body: const Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    final incomeList = incomesAsync.value ?? [];
+    final expenseList = expensesAsync.value ?? [];
+
+    final report = QuarterReport(
+      incomeList: incomeList,
+      expenseList: expenseList,
+      quarter: quarter,
+      year: year,
+    );
+
     return Scaffold(
       appBar: AppBar(title: const Text('Relatório Trimestral')),
       body: PdfPreview(
-        build: (format) => _generatePdf(),
+        build: (format) => _generatePdf(report),
         allowPrinting: true,
         allowSharing: true,
       ),
     );
   }
 
-  Future<Uint8List> _generatePdf() async {
+  Future<Uint8List> _generatePdf(QuarterReport report) async {
     final pdf = pw.Document();
 
     pdf.addPage(
@@ -194,7 +223,7 @@ class QuarterlyReportScreen extends StatelessWidget {
                   ),
                 ),
                 pw.SizedBox(height: 6),
-                _buildIncomeTable(month),
+                _buildIncomeTable(report, month),
                 pw.SizedBox(height: 16),
               ],
             ),
@@ -206,7 +235,7 @@ class QuarterlyReportScreen extends StatelessWidget {
             style: pw.TextStyle(fontSize: 11, fontWeight: pw.FontWeight.bold),
           ),
           pw.SizedBox(height: 6),
-          _buildIncomeSummary(),
+          _buildIncomeSummary(report),
           pw.SizedBox(height: 24),
 
           // DESPESAS
@@ -229,7 +258,7 @@ class QuarterlyReportScreen extends StatelessWidget {
                   ),
                 ),
                 pw.SizedBox(height: 6),
-                _buildExpenseTable(month),
+                _buildExpenseTable(report, month),
                 pw.SizedBox(height: 16),
               ],
             ),
@@ -241,7 +270,7 @@ class QuarterlyReportScreen extends StatelessWidget {
             style: pw.TextStyle(fontSize: 11, fontWeight: pw.FontWeight.bold),
           ),
           pw.SizedBox(height: 6),
-          _buildExpenseSummary(),
+          _buildExpenseSummary(report),
           pw.SizedBox(height: 24),
 
           // RESUMO GERAL DO TRIMESTRE
@@ -285,7 +314,7 @@ class QuarterlyReportScreen extends StatelessWidget {
     return pdf.save();
   }
 
-  pw.Widget _buildIncomeTable(int month) {
+  pw.Widget _buildIncomeTable(QuarterReport report, int month) {
     final dates = report.getIncomeDates(month);
     final table = report.getIncomeTable(month);
 
@@ -341,7 +370,7 @@ class QuarterlyReportScreen extends StatelessWidget {
     );
   }
 
-  pw.Widget _buildExpenseTable(int month) {
+  pw.Widget _buildExpenseTable(QuarterReport report, int month) {
     final expenses = report.getMonthExpenses(month);
 
     if (expenses.isEmpty) {
@@ -398,7 +427,7 @@ class QuarterlyReportScreen extends StatelessWidget {
     );
   }
 
-  pw.Widget _buildIncomeSummary() => pw.Table(
+  pw.Widget _buildIncomeSummary(QuarterReport report) => pw.Table(
     border: pw.TableBorder.all(color: PdfColors.black, width: 0.5),
     children: [
       // Header
@@ -429,7 +458,7 @@ class QuarterlyReportScreen extends StatelessWidget {
     ],
   );
 
-  pw.Widget _buildExpenseSummary() => pw.Table(
+  pw.Widget _buildExpenseSummary(QuarterReport report) => pw.Table(
     border: pw.TableBorder.all(color: PdfColors.black, width: 0.5),
     children: [
       // Header

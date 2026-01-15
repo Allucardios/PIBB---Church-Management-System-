@@ -1,24 +1,21 @@
 // Libraries
-
-import 'package:app_pibb/core/widgets/admin_gate.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 // Local Imports
 import '../../core/const/functions.dart';
 import '../../core/const/theme.dart';
-import '../../data/controllers/finance.dart';
-import '../../data/controllers/profile.dart';
+import '../../core/widgets/admin_gate.dart';
 import '../../data/models/income.dart';
+import '../form/income.dart';
+import '../../data/providers/finance_provider.dart';
 
-class ViewIncome extends StatelessWidget {
+class ViewIncome extends ConsumerWidget {
   const ViewIncome({super.key, required this.inc});
   final Income inc;
 
   @override
-  Widget build(BuildContext context) {
-    final ctrl = Get.find<FinanceCtrl>();
-    final prof = Get.find<ProfileCtrl>();
+  Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       appBar: AppBar(
         title: const Text("Detalhes da Receita"),
@@ -27,17 +24,29 @@ class ViewIncome extends StatelessWidget {
           PermitGate(
             value: 'Manager',
             child: IconButton(
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => IncomeForm(income: inc)),
+              ),
+              icon: const Icon(Icons.edit_outlined, color: AppTheme.primary),
+            ),
+          ),
+          PermitGate(
+            value: 'Manager',
+            child: IconButton(
               onPressed: () async {
                 final confirmed = await showYesNoDialog(
+                  context: context,
                   title: "Confirmação",
                   message: "Tem certeza que deseja apagar este item?",
                 );
                 if (confirmed) {
-                  ctrl.deleteIncome(inc.id!);
-                  Get.back();
+                  await ref
+                      .read(financeServiceProvider.notifier)
+                      .deleteIncome(inc.id!);
+                  if (context.mounted) Navigator.of(context).pop();
                 }
               },
-              icon: Icon(Icons.delete_outline, color: Colors.redAccent),
+              icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
             ),
           ),
         ],
@@ -47,7 +56,7 @@ class ViewIncome extends StatelessWidget {
           padding: const EdgeInsets.all(4),
           child: Column(
             spacing: 8,
-            children: [_headerCard(context), _amountsCard(), _obsCard()],
+            children: [_headerCard(context), _amountsCard(context), _obsCard()],
           ),
         ),
       ),
@@ -60,19 +69,22 @@ class ViewIncome extends StatelessWidget {
       elevation: 3,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: ListTile(
-        leading: Icon(
+        leading: const Icon(
           Icons.calendar_month_outlined,
           size: 40,
           color: AppTheme.primary,
         ),
-        title: Text(formatDate(inc.date), style: TextStyle(fontSize: 16)),
-        subtitle: Text("Registro Nº ${inc.id}", style: TextStyle(fontSize: 14)),
+        title: Text(formatDate(inc.date), style: const TextStyle(fontSize: 16)),
+        subtitle: Text(
+          "Registro Nº ${inc.id}",
+          style: const TextStyle(fontSize: 14),
+        ),
       ),
     );
   }
 
   // ---------------------------
-  Widget _amountsCard() {
+  Widget _amountsCard(BuildContext context) {
     return Card(
       elevation: 3,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -80,12 +92,12 @@ class ViewIncome extends StatelessWidget {
         children: [
           Wrap(
             children: [
-              _valueTile("Dízimos", inc.tithes),
-              _valueTile("Ofertas", inc.offerings),
-              _valueTile("Missões", inc.missions),
-              _valueTile("Ofertas Alçadas", inc.pledged),
-              _valueTile("Ofertas Especiais", inc.special),
-              _valueTile("Outros", inc.other),
+              _valueTile(context, "Dízimos", inc.tithes),
+              _valueTile(context, "Ofertas", inc.offerings),
+              _valueTile(context, "Missões", inc.missions),
+              _valueTile(context, "Ofertas Alçadas", inc.pledged),
+              _valueTile(context, "Ofertas Especiais", inc.special),
+              _valueTile(context, "Outros", inc.other),
             ],
           ),
           Padding(
@@ -147,11 +159,12 @@ class ViewIncome extends StatelessWidget {
     );
   }
 
-  Widget _valueTile(String label, double value) {
+  Widget _valueTile(BuildContext context, String label, double value) {
+    final size = MediaQuery.of(context).size;
     return Padding(
       padding: const EdgeInsets.all(8.0),
       child: Container(
-        width: Get.width * .43,
+        width: size.width * .43,
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
           color: AppTheme.secondary.withOpacity(.5),
@@ -160,10 +173,13 @@ class ViewIncome extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(label, style: TextStyle(fontSize: 14, color: Colors.grey)),
+            Text(
+              label,
+              style: const TextStyle(fontSize: 14, color: Colors.grey),
+            ),
             Text(
               "${formatKwanza(value)} ",
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
           ],
         ),

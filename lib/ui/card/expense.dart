@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 
 import '../../core/const/functions.dart';
 import '../../data/models/expense.dart';
@@ -15,11 +14,13 @@ class CardExpense extends StatelessWidget {
     elevation: 2,
     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
     child: ListTile(
-      onTap: () => Get.to(() => ViewExpense(exp: exp)),
-      leading: Icon(Icons.money_off_outlined, color: Color(0xFFFFB3BA)),
+      onTap: () => Navigator.of(
+        context,
+      ).push(MaterialPageRoute(builder: (_) => ViewExpense(exp: exp))),
+      leading: const Icon(Icons.money_off_outlined, color: Color(0xFFFFB3BA)),
       title: Text(
-        exp.obs!,
-        style: TextStyle(
+        exp.obs ?? '',
+        style: const TextStyle(
           fontWeight: FontWeight.bold,
           fontSize: 16,
           color: Color(0xBD000000),

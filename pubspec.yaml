@@ -9,8 +9,8 @@ dependencies:
     sdk: flutter
 
   supabase_flutter: ^2.5.0
-  get:
-  get_storage:
+  flutter_riverpod: ^2.6.1
+  riverpod_annotation: ^2.6.1
   pdf: ^3.11.1
   printing: ^5.13.0
   share_plus: ^9.0.0
@@ -27,6 +27,8 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^5.0.0
+  build_runner: ^2.4.13
+  riverpod_generator: ^2.6.1
 
 flutter_icons:
   android: true

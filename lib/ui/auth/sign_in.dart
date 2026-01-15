@@ -1,23 +1,22 @@
 // Libraries
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 // Local Imports
 import '../../core/const/theme.dart';
 import '../../core/widgets/email_tf.dart';
 import '../../core/widgets/pass_tf.dart';
-import '../../data/controllers/auth.dart';
+import '../../data/providers/auth_provider.dart';
 import 'sign_up.dart';
 
-class SignIn extends StatefulWidget {
+class SignIn extends ConsumerStatefulWidget {
   const SignIn({super.key});
   @override
-  State<SignIn> createState() => _SignInState();
+  ConsumerState<SignIn> createState() => _SignInState();
 }
 
-class _SignInState extends State<SignIn> {
+class _SignInState extends ConsumerState<SignIn> {
   // Controllers
-  final ctrl = Get.find<AuthCtrl>();
   final _email = TextEditingController();
   final _pass = TextEditingController();
 
@@ -26,6 +25,10 @@ class _SignInState extends State<SignIn> {
 
   @override
   Widget build(BuildContext context) {
+    final isLoading = ref.watch(authLoadingNotifierProvider);
+    final errorMessage = ref.watch(authErrorNotifierProvider);
+    final size = MediaQuery.of(context).size;
+
     return Scaffold(
       backgroundColor: AppTheme.secondary,
       body: SafeArea(
@@ -35,75 +38,78 @@ class _SignInState extends State<SignIn> {
               children: [
                 SizedBox(
                   width: double.infinity,
-                  height: Get.height * .37,
+                  height: size.height * .37,
                   child: Center(
                     child: Image.asset(
                       'assets/icon.png',
-                      height: Get.height * .27,
+                      height: size.height * .27,
                     ),
                   ),
                 ),
                 Padding(
                   padding: const EdgeInsets.all(12),
                   child: Column(
-                    spacing: 12,
                     children: [
-                      Card(
-                        child: Padding(
-                          padding: const EdgeInsets.all(12),
-                          child: Form(
-                            key: key,
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              spacing: 12,
-                              children: [
-                                // Email Field
-                                EmailTextField(
-                                  controller: _email,
-                                  hint: 'Digite o seu Email',
-                                ),
-                                // Password Field
-                                PasswordTextField(
-                                  controller: _pass,
-                                  hint: '***********',
-                                  label: 'Palavra - passe',
-                                ),
-                                // Error Message
-                                Obx(() {
-                                  if (ctrl.errorMessage.value.isNotEmpty) {
-                                    return Padding(
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: Card(
+                          child: Padding(
+                            padding: const EdgeInsets.all(12),
+                            child: Form(
+                              key: key,
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  // Email Field
+                                  EmailTextField(
+                                    controller: _email,
+                                    hint: 'Digite o seu Email',
+                                  ),
+                                  const SizedBox(height: 12),
+                                  // Password Field
+                                  PasswordTextField(
+                                    controller: _pass,
+                                    hint: '***********',
+                                    label: 'Palavra - passe',
+                                  ),
+                                  const SizedBox(height: 12),
+                                  // Error Message
+                                  if (errorMessage.isNotEmpty)
+                                    Padding(
                                       padding: const EdgeInsets.only(
                                         bottom: 16,
                                       ),
                                       child: Text(
-                                        ctrl.errorMessage.value,
+                                        errorMessage,
                                         style: const TextStyle(
                                           color: Colors.red,
                                         ),
                                         textAlign: TextAlign.center,
                                       ),
-                                    );
-                                  }
-                                  return const SizedBox.shrink();
-                                }),
-                                // Login Button
-                                Obx(() {
-                                  return SizedBox(
+                                    ),
+                                  // Login Button
+                                  SizedBox(
                                     width: double.infinity,
                                     height: 50,
                                     child: ElevatedButton(
-                                      onPressed: ctrl.isLoading.value
+                                      onPressed: isLoading
                                           ? null
                                           : () async {
                                               if (!key.currentState!
                                                   .validate()) {
                                                 return;
                                               }
-                                              await ctrl.signIn(
-                                                _email.text,
-                                                _pass.text,
-                                              );
+                                              await ref
+                                                  .read(
+                                                    authServiceProvider
+                                                        .notifier,
+                                                  )
+                                                  .signIn(
+                                                    _email.text,
+                                                    _pass.text,
+                                                    context,
+                                                  );
                                             },
                                       style: ElevatedButton.styleFrom(
                                         backgroundColor: AppTheme.primary,
@@ -113,7 +119,7 @@ class _SignInState extends State<SignIn> {
                                           ),
                                         ),
                                       ),
-                                      child: ctrl.isLoading.value
+                                      child: isLoading
                                           ? const CircularProgressIndicator(
                                               color: Colors.white,
                                             )
@@ -126,9 +132,9 @@ class _SignInState extends State<SignIn> {
                                               ),
                                             ),
                                     ),
-                                  );
-                                }),
-                              ],
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ),
@@ -137,20 +143,22 @@ class _SignInState extends State<SignIn> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           TextButton(
-                            onPressed: () => Get.to(() => SignUp()),
-                            child: Text(
+                            onPressed: () => Navigator.of(context).push(
+                              MaterialPageRoute(builder: (_) => const SignUp()),
+                            ),
+                            child: const Text(
                               'Criar Conta',
                               style: TextStyle(color: AppTheme.primary),
                             ),
                           ),
                         ],
                       ),
-
-                      Text(
+                      const SizedBox(height: 12),
+                      const Text(
                         'Desenvolvido por Eng. Silviano da Silva',
                         style: TextStyle(fontSize: 7, color: Colors.white),
                       ),
-                      Text(
+                      const Text(
                         'PIBB 1.0.1 Versão Beta de teste',
                         style: TextStyle(fontSize: 7, color: Colors.white),
                       ),

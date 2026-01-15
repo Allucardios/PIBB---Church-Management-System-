@@ -1,26 +1,25 @@
 // Libraries
-import 'package:app_pibb/core/widgets/money_tf.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 // Local Imports
 import '../../core/widgets/drop_tf.dart';
+import '../../core/widgets/money_tf.dart';
 import '../../core/widgets/textfield.dart';
-import '../../data/controllers/profile.dart';
 import '../../data/models/user.dart';
+import '../../data/providers/profile_provider.dart';
 
-class ProfileForm extends StatefulWidget {
+class ProfileForm extends ConsumerStatefulWidget {
   const ProfileForm({super.key, required this.prof, required this.isAdmin});
   final bool isAdmin;
   final Profile prof;
 
   @override
-  State<ProfileForm> createState() => _ProfileFormState();
+  ConsumerState<ProfileForm> createState() => _ProfileFormState();
 }
 
-class _ProfileFormState extends State<ProfileForm> {
+class _ProfileFormState extends ConsumerState<ProfileForm> {
   final _key = GlobalKey<FormState>();
-  final _ctrl = Get.find<ProfileCtrl>();
 
   ///Admin
   final _level = TextEditingController();
@@ -32,9 +31,9 @@ class _ProfileFormState extends State<ProfileForm> {
   final _phone = TextEditingController();
 
   ///Lists
-  final levels = ['Admin', 'Manager', 'User'];
-  final roles = ['Pastor', 'Membro', 'Tesoureiro', 'M. Finanças'];
-  final actives = ['Ativo', 'Inativo'];
+  final levels = const ['Admin', 'Manager', 'User'];
+  final roles = const ['Pastor', 'Membro', 'Tesoureiro', 'M. Finanças'];
+  final actives = const ['Ativo', 'Inativo'];
 
   bool isActive() {
     if (_active.text == actives[0]) {
@@ -46,14 +45,24 @@ class _ProfileFormState extends State<ProfileForm> {
 
   @override
   void initState() {
+    super.initState();
     //Admin
     _level.text = widget.prof.level;
-    _role.text = widget.prof.role!;
-    _active.text = widget.prof.active! ? actives[0] : actives[1];
+    _role.text = widget.prof.role ?? '';
+    _active.text = (widget.prof.active ?? false) ? actives[0] : actives[1];
     //User
-    _phone.text=widget.prof.phone!;
-    _name.text=widget.prof.name!;
-    super.initState();
+    _phone.text = widget.prof.phone ?? '';
+    _name.text = widget.prof.name ?? '';
+  }
+
+  @override
+  void dispose() {
+    _level.dispose();
+    _active.dispose();
+    _role.dispose();
+    _name.dispose();
+    _phone.dispose();
+    super.dispose();
   }
 
   @override
@@ -62,8 +71,8 @@ class _ProfileFormState extends State<ProfileForm> {
   }
 
   Widget _container(Widget child) => Container(
-    padding: EdgeInsets.all(8.0),
-    decoration: BoxDecoration(
+    padding: const EdgeInsets.all(8.0),
+    decoration: const BoxDecoration(
       color: Colors.white,
       borderRadius: BorderRadius.only(
         topLeft: Radius.circular(20),
@@ -81,7 +90,7 @@ class _ProfileFormState extends State<ProfileForm> {
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
-                color: Get.theme.primaryColor,
+                color: Theme.of(context).primaryColor,
               ),
             ),
           ),
@@ -121,11 +130,11 @@ class _ProfileFormState extends State<ProfileForm> {
               icon: Icons.check,
               hint: 'Ativo ou Inativo',
             ),
-            SizedBox(height: 10),
+            const SizedBox(height: 10),
             ElevatedButton(
               onPressed: () => _submit(widget.prof),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 20),
                 child: Text('Alterar'),
               ),
             ),
@@ -144,13 +153,24 @@ class _ProfileFormState extends State<ProfileForm> {
           mainAxisSize: MainAxisSize.min,
           spacing: 8,
           children: [
-            MyTextField(controller: _name, hint: 'Fulano de Tal', icon: Icons.person_2_outlined, label: 'Nome Completo',),
-            NumberTextField(controller: _phone, hint: '923000000', icon: Icons.phone, label: 'Telefone', limit: 9,),
-            SizedBox(height: 10),
+            MyTextField(
+              controller: _name,
+              hint: 'Fulano de Tal',
+              icon: Icons.person_2_outlined,
+              label: 'Nome Completo',
+            ),
+            NumberTextField(
+              controller: _phone,
+              hint: '923000000',
+              icon: Icons.phone,
+              label: 'Telefone',
+              limit: 9,
+            ),
+            const SizedBox(height: 10),
             ElevatedButton(
               onPressed: () => _submit(widget.prof),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 20),
                 child: Text('Alterar'),
               ),
             ),
@@ -175,8 +195,6 @@ class _ProfileFormState extends State<ProfileForm> {
           active: isActive(),
           level: _level.text.trim(),
         );
-        await _ctrl.updateProfile(value);
-        Get.back();
       } else {
         value = Profile(
           id: prof.id,
@@ -188,10 +206,18 @@ class _ProfileFormState extends State<ProfileForm> {
           active: prof.active,
           level: prof.level,
         );
-
-        await _ctrl.updateProfile(value);
-        Get.back();
       }
+
+      await ref.read(profileServiceProvider.notifier).updateProf(value);
+
+      // If updating current user, we should also manually trigger a refresh or let the stream handle it.
+      // But currentProfileProvider is a StateNotifier, we might want to update it if it's the current user.
+      final currentProf = ref.read(currentProfileProvider);
+      if (currentProf?.id == value.id) {
+        await ref.read(currentProfileProvider.notifier).updateProfile(value);
+      }
+
+      if (mounted) Navigator.of(context).pop();
     }
   }
 }

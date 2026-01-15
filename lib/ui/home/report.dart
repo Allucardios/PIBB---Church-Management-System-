@@ -1,6 +1,6 @@
 // Libraries
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 // Local Imports
 import '../../core/const/functions.dart';
@@ -12,14 +12,14 @@ import '../report/quaterly.dart';
 //enum
 enum PeriodType { mensal, trimestral, anual }
 
-class ReportPage extends StatefulWidget {
+class ReportPage extends ConsumerStatefulWidget {
   const ReportPage({super.key});
 
   @override
-  State<ReportPage> createState() => _ReportPageState();
+  ConsumerState<ReportPage> createState() => _ReportPageState();
 }
 
-class _ReportPageState extends State<ReportPage> {
+class _ReportPageState extends ConsumerState<ReportPage> {
   final _formKey = GlobalKey<FormState>();
 
   PeriodType? _selectedType;
@@ -39,11 +39,11 @@ class _ReportPageState extends State<ReportPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Relatório')),
+      appBar: AppBar(title: const Text('Relatório')),
       body: SafeArea(
         child: SingleChildScrollView(
           child: Form(
-            key: _formKey, // 👈 GlobalKey aplicada aqui
+            key: _formKey,
             child: Padding(
               padding: const EdgeInsets.all(8.0),
               child: Column(
@@ -52,17 +52,17 @@ class _ReportPageState extends State<ReportPage> {
                   DropdownButtonFormField<PeriodType>(
                     decoration: InputDecoration(
                       labelText: 'Tipo de Período',
-                      hintStyle: TextStyle(color: Colors.black54),
+                      hintStyle: const TextStyle(color: Colors.black54),
                       focusColor: Colors.grey.shade200,
                       filled: true,
                       fillColor: Colors.white,
-                      prefixIcon: Icon(
+                      prefixIcon: const Icon(
                         Icons.calendar_month,
                         color: AppTheme.primary,
                       ),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: Colors.white),
+                        borderSide: const BorderSide(color: Colors.white),
                       ),
                     ),
                     value: _selectedType,
@@ -104,18 +104,18 @@ class _ReportPageState extends State<ReportPage> {
                       keyboardType: TextInputType.number,
                       decoration: InputDecoration(
                         labelText: 'Mês (1–12)',
-                        hint: Text('1'),
-                        hintStyle: TextStyle(color: Colors.black54),
+                        hintText: '1',
+                        hintStyle: const TextStyle(color: Colors.black54),
                         focusColor: Colors.redAccent,
                         filled: true,
                         fillColor: Colors.white,
-                        prefixIcon: Icon(
+                        prefixIcon: const Icon(
                           Icons.calendar_month,
                           color: AppTheme.primary,
                         ),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: Colors.white),
+                          borderSide: const BorderSide(color: Colors.white),
                         ),
                       ),
                       validator: (value) {
@@ -136,18 +136,18 @@ class _ReportPageState extends State<ReportPage> {
                       keyboardType: TextInputType.number,
                       decoration: InputDecoration(
                         labelText: 'Ano',
-                        hint: Text('Informe o ano'),
-                        hintStyle: TextStyle(color: Colors.black54),
+                        hintText: 'Informe o ano',
+                        hintStyle: const TextStyle(color: Colors.black54),
                         focusColor: Colors.redAccent,
                         filled: true,
                         fillColor: Colors.white,
-                        prefixIcon: Icon(
+                        prefixIcon: const Icon(
                           Icons.calendar_month,
                           color: AppTheme.primary,
                         ),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: Colors.white),
+                          borderSide: const BorderSide(color: Colors.white),
                         ),
                       ),
                       validator: _yearValidator,
@@ -160,18 +160,18 @@ class _ReportPageState extends State<ReportPage> {
                       keyboardType: TextInputType.number,
                       decoration: InputDecoration(
                         labelText: 'Trimestre (1–4)',
-                        hint: Text('3'),
-                        hintStyle: TextStyle(color: Colors.black54),
+                        hintText: '3',
+                        hintStyle: const TextStyle(color: Colors.black54),
                         focusColor: Colors.redAccent,
                         filled: true,
                         fillColor: Colors.white,
-                        prefixIcon: Icon(
+                        prefixIcon: const Icon(
                           Icons.calendar_month,
                           color: AppTheme.primary,
                         ),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: Colors.white),
+                          borderSide: const BorderSide(color: Colors.white),
                         ),
                       ),
                       validator: (value) {
@@ -192,18 +192,18 @@ class _ReportPageState extends State<ReportPage> {
                       keyboardType: TextInputType.number,
                       decoration: InputDecoration(
                         labelText: 'Ano',
-                        hint: Text('Informe o ano'),
-                        hintStyle: TextStyle(color: Colors.black54),
+                        hintText: 'Informe o ano',
+                        hintStyle: const TextStyle(color: Colors.black54),
                         focusColor: Colors.redAccent,
                         filled: true,
                         fillColor: Colors.white,
-                        prefixIcon: Icon(
+                        prefixIcon: const Icon(
                           Icons.calendar_month,
                           color: AppTheme.primary,
                         ),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: Colors.white),
+                          borderSide: const BorderSide(color: Colors.white),
                         ),
                       ),
                       validator: _yearValidator,
@@ -216,18 +216,18 @@ class _ReportPageState extends State<ReportPage> {
                       keyboardType: TextInputType.number,
                       decoration: InputDecoration(
                         labelText: 'Ano',
-                        hint: Text('Informe o ano'),
-                        hintStyle: TextStyle(color: Colors.black54),
+                        hintText: 'Informe o ano',
+                        hintStyle: const TextStyle(color: Colors.black54),
                         focusColor: Colors.redAccent,
                         filled: true,
                         fillColor: Colors.white,
-                        prefixIcon: Icon(
+                        prefixIcon: const Icon(
                           Icons.calendar_month,
                           color: AppTheme.primary,
                         ),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: Colors.white),
+                          borderSide: const BorderSide(color: Colors.white),
                         ),
                       ),
                       validator: _yearValidator,
@@ -240,19 +240,19 @@ class _ReportPageState extends State<ReportPage> {
                     onPressed: () {
                       if (_formKey.currentState!.validate()) {
                         if (_selectedType == PeriodType.mensal) {
-                          Get.to(
-                            () => MonthlyReportScreen(
-                              report: Report(
-                                ref: toInt(_monthCtrl.text),
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => MonthlyReportScreen(
+                                month: toInt(_monthCtrl.text),
                                 year: toInt(_yearCtrl.text),
                               ),
                             ),
                           );
                         }
                         if (_selectedType == PeriodType.trimestral) {
-                          Get.to(
-                            () => QuarterlyReportScreen(
-                              report: QuarterReport(
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => QuarterlyReportScreen(
                                 quarter: toInt(_quarterCtrl.text),
                                 year: toInt(_yearCtrl.text),
                               ),
@@ -260,9 +260,11 @@ class _ReportPageState extends State<ReportPage> {
                           );
                         }
                         if (_selectedType == PeriodType.anual) {
-                          Get.to(
-                            () => AnnualReportScreen(
-                              report: AnnualReport(year: toInt(_yearCtrl.text)),
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => AnnualReportScreen(
+                                year: toInt(_yearCtrl.text),
+                              ),
                             ),
                           );
                         }

@@ -1,27 +1,25 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/const/functions.dart';
 import '../../core/const/theme.dart';
 import '../../core/widgets/money_tf.dart';
 import '../../core/widgets/textfield.dart';
-import '../../data/controllers/finance.dart';
 import '../../data/models/income.dart';
+import '../../data/providers/finance_provider.dart';
 
-class IncomeForm extends StatefulWidget {
-  const IncomeForm({super.key});
+class IncomeForm extends ConsumerStatefulWidget {
+  const IncomeForm({super.key, this.income});
+  final Income? income;
 
   @override
-  State<IncomeForm> createState() => _IncomeFormState();
+  ConsumerState<IncomeForm> createState() => _IncomeFormState();
 }
 
-class _IncomeFormState extends State<IncomeForm> {
-  ///
+class _IncomeFormState extends ConsumerState<IncomeForm> {
   late DateTime _date;
   final key = GlobalKey<FormState>();
 
-  ///Controllers
-  final ctrl = Get.find<FinanceCtrl>();
   final tithes = TextEditingController();
   final offerings = TextEditingController();
   final date = TextEditingController();
@@ -31,7 +29,6 @@ class _IncomeFormState extends State<IncomeForm> {
   final other = TextEditingController();
   final obs = TextEditingController();
 
-  ///methods
   // Clean the TextFields
   void clean() {
     tithes.clear();
@@ -46,6 +43,7 @@ class _IncomeFormState extends State<IncomeForm> {
 
   // Populate the document income
   Income doc() => Income(
+    id: widget.income?.id,
     date: _date,
     tithes: toDouble(tithes.text),
     offerings: toDouble(offerings.text),
@@ -59,7 +57,19 @@ class _IncomeFormState extends State<IncomeForm> {
   @override
   void initState() {
     super.initState();
-    _date = DateTime.now();
+    if (widget.income != null) {
+      _date = widget.income!.date;
+      tithes.text = widget.income!.tithes.toString();
+      offerings.text = widget.income!.offerings.toString();
+      missions.text = widget.income!.missions.toString();
+      pledged.text = widget.income!.pledged.toString();
+      special.text = widget.income!.special.toString();
+      other.text = widget.income!.other.toString();
+      obs.text = widget.income!.obs ?? '';
+    } else {
+      _date = DateTime.now();
+    }
+    date.text = formatDate(_date);
   }
 
   @override
@@ -77,8 +87,13 @@ class _IncomeFormState extends State<IncomeForm> {
 
   @override
   Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+    final isEditing = widget.income != null;
+
     return Scaffold(
-      appBar: AppBar(title: Text('Nova Receita')),
+      appBar: AppBar(
+        title: Text(isEditing ? 'Editar Receita' : 'Nova Receita'),
+      ),
       body: SingleChildScrollView(
         child: Form(
           key: key,
@@ -92,7 +107,7 @@ class _IncomeFormState extends State<IncomeForm> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     SizedBox(
-                      width: Get.width * .45,
+                      width: size.width * .45,
                       child: NumberTextField(
                         controller: offerings,
                         hint: 'Oferta do Dia',
@@ -101,7 +116,7 @@ class _IncomeFormState extends State<IncomeForm> {
                       ),
                     ),
                     SizedBox(
-                      width: Get.width * .45,
+                      width: size.width * .45,
                       child: NumberTextField(
                         controller: tithes,
                         hint: 'Dizimos do Dia',
@@ -115,7 +130,7 @@ class _IncomeFormState extends State<IncomeForm> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     SizedBox(
-                      width: Get.width * .45,
+                      width: size.width * .45,
                       child: NumberTextField(
                         controller: missions,
                         hint: 'Missões Provinciais / Nacionais',
@@ -124,7 +139,7 @@ class _IncomeFormState extends State<IncomeForm> {
                       ),
                     ),
                     SizedBox(
-                      width: Get.width * .45,
+                      width: size.width * .45,
                       child: NumberTextField(
                         controller: pledged,
                         hint: 'Ofertas Alçadas',
@@ -138,7 +153,7 @@ class _IncomeFormState extends State<IncomeForm> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     SizedBox(
-                      width: Get.width * .45,
+                      width: size.width * .45,
                       child: NumberTextField(
                         controller: special,
                         hint: 'Ofertas Especial',
@@ -147,7 +162,7 @@ class _IncomeFormState extends State<IncomeForm> {
                       ),
                     ),
                     SizedBox(
-                      width: Get.width * .45,
+                      width: size.width * .45,
                       child: NumberTextField(
                         controller: other,
                         hint: 'Outras Ofertas',
@@ -167,16 +182,24 @@ class _IncomeFormState extends State<IncomeForm> {
                 Padding(
                   padding: const EdgeInsets.all(12),
                   child: ElevatedButton(
-                    onPressed: () {
+                    onPressed: () async {
                       if (key.currentState!.validate()) {
-                        ctrl.addIncome(doc());
+                        if (isEditing) {
+                          await ref
+                              .read(financeServiceProvider.notifier)
+                              .updateIncome(doc());
+                        } else {
+                          await ref
+                              .read(financeServiceProvider.notifier)
+                              .addIncome(doc());
+                        }
                         clean();
-                        Get.back();
+                        if (mounted) Navigator.of(context).pop();
                       }
                     },
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 40),
-                      child: Text('Adicionar'),
+                      child: Text(isEditing ? 'Guardar' : 'Adicionar'),
                     ),
                   ),
                 ),
@@ -192,7 +215,7 @@ class _IncomeFormState extends State<IncomeForm> {
     crossAxisAlignment: CrossAxisAlignment.start,
     spacing: 0,
     children: [
-      Text(
+      const Text(
         'Data',
         style: TextStyle(
           fontSize: 16,
@@ -204,7 +227,7 @@ class _IncomeFormState extends State<IncomeForm> {
       TextFormField(
         controller: date,
         readOnly: true,
-        style: TextStyle(color: Colors.black, fontSize: 16),
+        style: const TextStyle(color: Colors.black, fontSize: 16),
         validator: (value) {
           if (_date.isAfter(DateTime.now())) {
             return "A data não pode ser superior ao dia de hoje";
@@ -228,17 +251,17 @@ class _IncomeFormState extends State<IncomeForm> {
           focusColor: Colors.redAccent,
           filled: true,
           fillColor: Colors.white,
-          prefixIcon: Icon(
+          prefixIcon: const Icon(
             Icons.calendar_month_outlined,
             color: AppTheme.primary,
           ),
-          suffixIcon: Icon(
+          suffixIcon: const Icon(
             Icons.chevron_right_outlined,
             color: AppTheme.primary,
           ),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: Colors.white),
+            borderSide: const BorderSide(color: Colors.white),
           ),
         ),
       ),

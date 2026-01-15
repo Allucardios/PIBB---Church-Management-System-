@@ -1,12 +1,12 @@
 // Libraries
-import 'package:get/get.dart';
-
 // Local Imports
 import '../../core/const/functions.dart';
-import '../controllers/finance.dart';
+import '../models/income.dart';
+import '../models/expense.dart';
 
 class MonthReport {
-  final financeCtrl = Get.find<FinanceCtrl>();
+  final List<Income> incomes;
+  final List<Expense> expensesList;
   final int month;
   final int year;
 
@@ -15,9 +15,32 @@ class MonthReport {
 
   String ref() => '${monthName(month)} / $year';
 
-  MonthReport({required this.month, required this.year});
+  MonthReport({
+    required this.incomes,
+    required this.expensesList,
+    required this.month,
+    required this.year,
+  });
 
-  double get income => financeCtrl.getMonthlyIncome(DateTime(year, month));
-  double get expenses => financeCtrl.getMonthlyExpenses(DateTime(year, month));
-  double get balance => financeCtrl.getMonthlyBalance(DateTime(year, month));
+  double get income {
+    final monthDate = DateTime(year, month);
+    return incomes
+        .where(
+          (i) =>
+              i.date.year == monthDate.year && i.date.month == monthDate.month,
+        )
+        .fold(0.0, (sum, income) => sum + income.totalIncome());
+  }
+
+  double get expenses {
+    final monthDate = DateTime(year, month);
+    return expensesList
+        .where(
+          (e) =>
+              e.date.year == monthDate.year && e.date.month == monthDate.month,
+        )
+        .fold(0.0, (sum, expense) => sum + expense.amount);
+  }
+
+  double get balance => income - expenses;
 }
