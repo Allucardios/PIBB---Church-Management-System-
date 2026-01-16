@@ -7,15 +7,19 @@ import '../../core/const/functions.dart';
 import '../../core/const/theme.dart';
 import '../../core/widgets/admin_gate.dart';
 import '../../data/models/expense.dart';
-import '../form/expense.dart';
+import '../../data/providers/account_provider.dart';
 import '../../data/providers/finance_provider.dart';
+import '../form/expense.dart';
 
 class ViewExpense extends ConsumerWidget {
   const ViewExpense({super.key, required this.exp});
+
   final Expense exp;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final accountsAsync = ref.watch(accountsStreamProvider);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text("Detalhes da Despesa"),
@@ -56,7 +60,19 @@ class ViewExpense extends ConsumerWidget {
           padding: const EdgeInsets.all(4),
           child: Column(
             spacing: 8,
-            children: [_headerCard(context), _amountsCard()],
+            children: [
+              _headerCard(context),
+              accountsAsync.when(
+                data: (accounts) {
+                  final account = accounts
+                      .where((a) => a.id == exp.accountId)
+                      .firstOrNull;
+                  return _amountsCard(account?.name ?? 'Não definida');
+                },
+                loading: () => _amountsCard('Carregando...'),
+                error: (_, __) => _amountsCard('Erro ao carregar'),
+              ),
+            ],
           ),
         ),
       ),
@@ -84,7 +100,7 @@ class ViewExpense extends ConsumerWidget {
   }
 
   // ---------------------------
-  Widget _amountsCard() {
+  Widget _amountsCard(String accountName) {
     return Card(
       elevation: 3,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -98,6 +114,11 @@ class ViewExpense extends ConsumerWidget {
                 Icons.description_outlined,
               ),
               _valueTile("Categoria", exp.category, Icons.category_outlined),
+              _valueTile(
+                "Conta de Pagamento",
+                accountName,
+                Icons.account_balance_wallet_outlined,
+              ),
               _valueTile(
                 "Tipo de Movimento",
                 exp.originType,
@@ -116,7 +137,7 @@ class ViewExpense extends ConsumerWidget {
               ),
               child: Center(
                 child: Text(
-                  'Total: ${formatKwanza(exp.amount)}',
+                  'Total: ${formatKz(exp.amount)}',
                   style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,

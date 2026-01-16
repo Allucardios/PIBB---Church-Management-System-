@@ -15,71 +15,23 @@ part 'profile_provider.g.dart';
 /// Current Profile Provider
 @riverpod
 class CurrentProfile extends _$CurrentProfile {
-  StreamSubscription<List<Map<String, dynamic>>>? _streamSubscription;
-
   @override
   Profile? build() {
-    // Watch Auth State. Rebuild building whenever auth state changes.
-    final user = ref.watch(authNotifierProvider);
+    final asyncProfile = ref.watch(currentUserStreamProvider);
 
-    // Clear old subscription if it exists
-    _streamSubscription?.cancel();
-
-    if (user == null) {
-      if (kDebugMode) print('CurrentProfile: No user, state is null');
-      return null;
-    }
-
-    // Subscribe to real-time updates for the current profile
-    if (kDebugMode) print('CurrentProfile: Subscribing to profile ${user.id}');
-
-    _streamSubscription = client
-        .from('profiles')
-        .stream(primaryKey: ['id'])
-        .eq('id', user.id)
-        .listen(
-          (rows) {
-            if (rows.isNotEmpty) {
-              final profile = Profile.fromJson(rows.first);
-              state = profile;
-              if (kDebugMode)
-                print(
-                  'CurrentProfile: Update received! Level: ${profile.level}',
-                );
-
-              // Force logout if user is deactivated
-              if (profile.active == false) {
-                if (kDebugMode)
-                  print('CurrentProfile: User deactivated. Signing out.');
-                ref
-                    .read(authErrorNotifierProvider.notifier)
-                    .setError(
-                      'A tua conta está desativada. Contacta o administrador.',
-                    );
-                ref.read(authServiceProvider.notifier).signOut();
-              }
-            } else {
-              state = null;
-            }
-          },
-          onError: (err) {
-            final errorStr = err.toString();
-            if (kDebugMode) print('CurrentProfile: Stream Error: $errorStr');
-
-            if (errorStr.contains('invalidjwttoken') ||
-                errorStr.contains('JWT expired')) {
-              if (kDebugMode)
-                print('CurrentProfile: JWT Error detected. Signing out.');
-              ref.read(authServiceProvider.notifier).signOut();
-            }
-          },
-        );
-
-    ref.onDispose(() {
-      _streamSubscription?.cancel();
+    // Side effect: Logout if inactive
+    ref.listen(currentUserStreamProvider, (prev, next) {
+      final profile = next.value;
+      if (profile != null && profile.active == false) {
+        if (kDebugMode) print('CurrentProfile: User deactivated. Signing out.');
+        ref
+            .read(authErrorNotifierProvider.notifier)
+            .setError('A tua conta está desativada. Contacta o administrador.');
+        ref.read(authServiceProvider.notifier).signOut();
+      }
     });
 
-    return null; // State will be updated by the listener
+    return asyncProfile.value;
   }
 
   Future<void> updateProfile(Profile prof) async {
@@ -93,12 +45,13 @@ class CurrentProfile extends _$CurrentProfile {
     }
   }
 
-  bool isAdmin() => state?.level == 'Admin';
-  bool isManager() => state?.level == 'Manager';
+  bool isAdmin() => state?.level.trim().toLowerCase() == 'admin';
+  bool isManager() => state?.level.trim().toLowerCase() == 'manager';
   bool isActive() => state?.active ?? false;
 
   bool canEdit() {
-    if (isAdmin() || isManager()) return true;
+    final lvl = state?.level.trim().toLowerCase();
+    if (lvl == 'admin' || lvl == 'manager') return true;
     return false;
   }
 

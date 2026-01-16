@@ -177,7 +177,7 @@ class _ProfileByIdProviderElement
   String get id => (origin as ProfileByIdProvider).id;
 }
 
-String _$currentUserStreamHash() => r'19ed4d86dc6f3416a24718d1613c2e39b4cc7633';
+String _$currentUserStreamHash() => r'0ccc6c6baad19845ae50b4bc38f02abe2b071612';
 
 /// Current User Stream Provider
 ///
@@ -196,7 +196,7 @@ final currentUserStreamProvider = AutoDisposeStreamProvider<Profile?>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef CurrentUserStreamRef = AutoDisposeStreamProviderRef<Profile?>;
-String _$currentProfileHash() => r'2e8f1f726a2bd36c0c351232176c069e11cbca3c';
+String _$currentProfileHash() => r'bd5dfc11eb22235651b011b3aefbd81ca46ebb40';
 
 /// Current Profile Provider
 ///

@@ -28,7 +28,9 @@ class Profile {
     name: json['name'] ?? '',
     phone: json['phone'] ?? '',
     email: json['email'] ?? '',
-    createdAt: DateTime.tryParse(json['created_at'] ?? "") ?? DateTime.now(),
+    createdAt:
+        DateTime.tryParse(json['created_at'] ?? "") ??
+        DateTime.fromMillisecondsSinceEpoch(0),
     role: json['role'] ?? 'Membro',
     level: json['level'] ?? 'User',
     active: json['active'] ?? false,
@@ -44,4 +46,31 @@ class Profile {
   };
 
   Map<String, dynamic> toStorage() => {'img': img};
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is Profile &&
+          runtimeType == other.runtimeType &&
+          id == other.id &&
+          name == other.name &&
+          role == other.role &&
+          img == other.img &&
+          active == other.active &&
+          phone == other.phone &&
+          email == other.email &&
+          level == other.level &&
+          createdAt == other.createdAt;
+
+  @override
+  int get hashCode =>
+      id.hashCode ^
+      name.hashCode ^
+      role.hashCode ^
+      img.hashCode ^
+      active.hashCode ^
+      phone.hashCode ^
+      email.hashCode ^
+      level.hashCode ^
+      createdAt.hashCode;
 }

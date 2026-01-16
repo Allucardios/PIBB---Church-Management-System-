@@ -40,6 +40,7 @@ class _DashBoardState extends ConsumerState<DashBoard>
             spacing: 20,
             children: [
               _periodSelector(),
+
               //
               _sectionTitle('Resumo do Mês'),
               _buildMonthlyCards(),
@@ -181,170 +182,42 @@ class _DashBoardState extends ConsumerState<DashBoard>
   }
 
   Widget _statCard(String title, double value, Color color, IconData icon) {
-    final formatter = NumberFormat.currency(symbol: 'AOA ', decimalDigits: 2);
+    final formatter = NumberFormat.currency(
+      symbol: 'Kz ',
+      decimalDigits: 2,
+      locale: 'pt_PT',
+    );
 
-    return Card(
-      elevation: 4,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                Icon(icon, color: color, size: 20),
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey.shade600,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-            Center(
-              child: Text(
-                formatter.format(value),
+    return Padding(
+      padding: const EdgeInsets.all(8),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, color: color, size: 20),
+              Text(
+                title,
                 style: TextStyle(
                   fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  color: color,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildMonthlyIncomeVsExpensesChart() {
-    final month = ref.watch(selectedMonthProvider);
-    final incomesAsync = ref.watch(incomeStreamProvider);
-    final expensesAsync = ref.watch(expenseStreamProvider);
-
-    if (incomesAsync.isLoading || expensesAsync.isLoading) {
-      return const SizedBox.shrink();
-    }
-
-    final incomes = incomesAsync.value ?? [];
-    final expensesList = expensesAsync.value ?? [];
-    final calc = ref.read(financeCalculationsProvider.notifier);
-
-    final incomeValue = calc.getMonthlyIncome(incomes, month);
-    final expensesValue = calc.getMonthlyExpenses(expensesList, month);
-
-    final data = [
-      _ChartData('Receitas', incomeValue, const Color(0xFFB5EAD7)),
-      _ChartData('Despesas', expensesValue, const Color(0xFFFFB3BA)),
-    ];
-
-    return Card(
-      color: Colors.black54,
-      elevation: 2,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            SizedBox(
-              height: 250,
-              child: SfCartesianChart(
-                title: const ChartTitle(
-                  text: 'Receitas vs Despesas ',
-                  textStyle: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                primaryXAxis: const CategoryAxis(
-                  labelStyle: TextStyle(color: Colors.white),
-                ),
-                primaryYAxis: NumericAxis(
-                  numberFormat: NumberFormat.compact(),
-                  labelStyle: const TextStyle(color: Colors.white),
-                ),
-                series: <CartesianSeries>[
-                  ColumnSeries<_ChartData, String>(
-                    dataSource: data,
-                    xValueMapper: (data, _) => data.category,
-                    yValueMapper: (data, _) => data.value,
-                    pointColorMapper: (data, _) => data.color,
-                    borderRadius: const BorderRadius.all(Radius.circular(8)),
-                    dataLabelSettings: const DataLabelSettings(
-                      isVisible: true,
-                      textStyle: TextStyle(color: Colors.white),
-                      labelPosition: ChartDataLabelPosition.outside,
-                    ),
-                  ),
-                  LineSeries<_ChartData, String>(
-                    dataSource: data,
-                    xValueMapper: (data, _) => data.category,
-                    yValueMapper: (data, _) => data.value,
-                    pointColorMapper: (data, _) => Colors.blue,
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildExpensesByCategoryChart() {
-    final month = ref.watch(selectedMonthProvider);
-    final expensesAsync = ref.watch(expenseStreamProvider);
-
-    if (expensesAsync.isLoading) return const SizedBox.shrink();
-
-    final expensesList = expensesAsync.value ?? [];
-    final calc = ref.read(financeCalculationsProvider.notifier);
-    final categoryData = calc.getExpensesByCategory(expensesList, month);
-
-    if (categoryData.isEmpty) return const SizedBox.shrink();
-
-    final data = categoryData.entries
-        .map((e) => _PieData(e.key, e.value))
-        .toList();
-
-    return Card(
-      color: Colors.black54,
-      elevation: 2,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: SizedBox(
-          height: 300,
-          child: SfCircularChart(
-            title: const ChartTitle(
-              text: 'Despesas por Categoria',
-              textStyle: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            palette: PastelColors().pastelColorsList,
-            legend: const Legend(
-              isVisible: true,
-              position: LegendPosition.bottom,
-              overflowMode: LegendItemOverflowMode.wrap,
-              textStyle: TextStyle(color: Colors.white),
-            ),
-            series: <CircularSeries>[
-              PieSeries<_PieData, String>(
-                dataSource: data,
-                xValueMapper: (d, _) => d.category,
-                yValueMapper: (d, _) => d.value,
-                dataLabelSettings: const DataLabelSettings(
-                  isVisible: true,
-                  labelPosition: ChartDataLabelPosition.outside,
+                  color: Colors.grey.shade600,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
             ],
           ),
-        ),
+          Center(
+            child: Text(
+              formatter.format(value),
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: color,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -354,8 +227,7 @@ class _DashBoardState extends ConsumerState<DashBoard>
     final incomesAsync = ref.watch(incomeStreamProvider);
     final expensesAsync = ref.watch(expenseStreamProvider);
 
-    if (incomesAsync.isLoading || expensesAsync.isLoading)
-      return const SizedBox.shrink();
+    if (incomesAsync.isLoading || expensesAsync.isLoading) SizedBox.shrink();
 
     final incomes = incomesAsync.value ?? [];
     final expensesList = expensesAsync.value ?? [];
@@ -396,13 +268,128 @@ class _DashBoardState extends ConsumerState<DashBoard>
     );
   }
 
+  Widget _buildMonthlyIncomeVsExpensesChart() {
+    final month = ref.watch(selectedMonthProvider);
+    final incomesAsync = ref.watch(incomeStreamProvider);
+    final expensesAsync = ref.watch(expenseStreamProvider);
+
+    if (incomesAsync.isLoading || expensesAsync.isLoading) {
+      return const SizedBox.shrink();
+    }
+
+    final incomes = incomesAsync.value ?? [];
+    final expensesList = expensesAsync.value ?? [];
+    final calc = ref.read(financeCalculationsProvider.notifier);
+
+    final incomeValue = calc.getMonthlyIncome(incomes, month);
+    final expensesValue = calc.getMonthlyExpenses(expensesList, month);
+
+    final data = [
+      _ChartData('Receitas', incomeValue, const Color(0xFFB5EAD7)),
+      _ChartData('Despesas', expensesValue, const Color(0xFFFFB3BA)),
+    ];
+
+    return Padding(
+      padding: const EdgeInsets.all(8),
+      child: SizedBox(
+        height: MediaQuery.of(context).size.height * .4,
+        child: SfCartesianChart(
+          title: const ChartTitle(
+            text: 'Receitas vs Despesas ',
+            textStyle: TextStyle(
+              color: Colors.black45,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          primaryXAxis: const CategoryAxis(
+            labelStyle: TextStyle(color: Colors.black45),
+          ),
+          primaryYAxis: NumericAxis(
+            numberFormat: NumberFormat.compact(),
+            labelStyle: const TextStyle(color: Colors.black45),
+          ),
+          series: <CartesianSeries>[
+            ColumnSeries<_ChartData, String>(
+              dataSource: data,
+              xValueMapper: (data, _) => data.category,
+              yValueMapper: (data, _) => data.value,
+              pointColorMapper: (data, _) => data.color,
+              borderRadius: const BorderRadius.all(Radius.circular(8)),
+              dataLabelSettings: const DataLabelSettings(
+                isVisible: true,
+                textStyle: TextStyle(color: Colors.black45),
+                labelPosition: ChartDataLabelPosition.outside,
+              ),
+            ),
+            LineSeries<_ChartData, String>(
+              dataSource: data,
+              xValueMapper: (data, _) => data.category,
+              yValueMapper: (data, _) => data.value,
+              pointColorMapper: (data, _) => Colors.orangeAccent,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildExpensesByCategoryChart() {
+    final month = ref.watch(selectedMonthProvider);
+    final expensesAsync = ref.watch(expenseStreamProvider);
+
+    if (expensesAsync.isLoading) return const SizedBox.shrink();
+
+    final expensesList = expensesAsync.value ?? [];
+    final calc = ref.read(financeCalculationsProvider.notifier);
+    final categoryData = calc.getExpensesByCategory(expensesList, month);
+
+    if (categoryData.isEmpty) return const SizedBox.shrink();
+
+    final data = categoryData.entries
+        .map((e) => _PieData(e.key, e.value))
+        .toList();
+
+    return Padding(
+      padding: const EdgeInsets.all(8),
+      child: SizedBox(
+        height: MediaQuery.of(context).size.height * .4,
+        child: SfCircularChart(
+          title: const ChartTitle(
+            text: 'Despesas por Categoria',
+            textStyle: TextStyle(
+              color: Colors.black45,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          palette: PastelColors().pastelColorsList,
+          legend: const Legend(
+            isVisible: true,
+            position: LegendPosition.bottom,
+            overflowMode: LegendItemOverflowMode.wrap,
+            textStyle: TextStyle(color: Colors.black45),
+          ),
+          series: <CircularSeries>[
+            PieSeries<_PieData, String>(
+              dataSource: data,
+              xValueMapper: (d, _) => d.category,
+              yValueMapper: (d, _) => d.value,
+              dataLabelSettings: const DataLabelSettings(
+                isVisible: true,
+                labelPosition: ChartDataLabelPosition.outside,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildYearlyEvolutionChart() {
     final year = ref.watch(selectedYearProvider);
     final incomesAsync = ref.watch(incomeStreamProvider);
     final expensesAsync = ref.watch(expenseStreamProvider);
 
-    if (incomesAsync.isLoading || expensesAsync.isLoading)
-      return const SizedBox.shrink();
+    if (incomesAsync.isLoading || expensesAsync.isLoading) SizedBox.shrink();
 
     final incomes = incomesAsync.value ?? [];
     final expensesList = expensesAsync.value ?? [];
@@ -410,57 +397,47 @@ class _DashBoardState extends ConsumerState<DashBoard>
 
     final evolution = calc.getMonthlyEvolution(incomes, expensesList, year);
 
-    return Card(
-      color: Colors.black54,
-      elevation: 2,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          spacing: 8,
-          children: [
-            SizedBox(
-              height: 300,
-              child: SfCartesianChart(
-                primaryXAxis: const CategoryAxis(
-                  labelStyle: TextStyle(color: Colors.white),
-                ),
-                primaryYAxis: NumericAxis(
-                  numberFormat: NumberFormat.compact(),
-                  labelStyle: const TextStyle(color: Colors.white),
-                ),
-                legend: const Legend(
-                  isVisible: true,
-                  textStyle: TextStyle(color: Colors.white),
-                  position: LegendPosition.bottom,
-                ),
-                tooltipBehavior: TooltipBehavior(enable: true),
-                title: const ChartTitle(
-                  text: 'Evolução Mensal',
-                  textStyle: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                series: <CartesianSeries>[
-                  ColumnSeries<Map<String, dynamic>, String>(
-                    name: 'Receitas',
-                    dataSource: evolution,
-                    xValueMapper: (data, _) =>
-                        DateFormat('MMM').format(DateTime(year, data['month'])),
-                    yValueMapper: (data, _) => data['income'],
-                    color: const Color(0xFFB5EAD7),
-                  ),
-                  ColumnSeries<Map<String, dynamic>, String>(
-                    name: 'Despesas',
-                    dataSource: evolution,
-                    xValueMapper: (data, _) =>
-                        DateFormat('MMM').format(DateTime(year, data['month'])),
-                    yValueMapper: (data, _) => data['expenses'],
-                    color: const Color(0xFFFFB3BA),
-                  ),
-                ],
-              ),
+    return Padding(
+      padding: const EdgeInsets.all(8),
+      child: SizedBox(
+        height: MediaQuery.of(context).size.height * .4,
+        child: SfCartesianChart(
+          primaryXAxis: const CategoryAxis(
+            labelStyle: TextStyle(color: Colors.black45),
+          ),
+          primaryYAxis: NumericAxis(
+            numberFormat: NumberFormat.compact(),
+            labelStyle: const TextStyle(color: Colors.black45),
+          ),
+          legend: const Legend(
+            isVisible: true,
+            textStyle: TextStyle(color: Colors.black45),
+            position: LegendPosition.bottom,
+          ),
+          tooltipBehavior: TooltipBehavior(enable: true),
+          title: const ChartTitle(
+            text: 'Evolução Mensal',
+            textStyle: TextStyle(
+              color: Colors.black45,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          series: <CartesianSeries>[
+            ColumnSeries<Map<String, dynamic>, String>(
+              name: 'Receitas',
+              dataSource: evolution,
+              xValueMapper: (data, _) =>
+                  DateFormat('MMM').format(DateTime(year, data['month'])),
+              yValueMapper: (data, _) => data['income'],
+              color: const Color(0xFFB5EAD7),
+            ),
+            ColumnSeries<Map<String, dynamic>, String>(
+              name: 'Despesas',
+              dataSource: evolution,
+              xValueMapper: (data, _) =>
+                  DateFormat('MMM').format(DateTime(year, data['month'])),
+              yValueMapper: (data, _) => data['expenses'],
+              color: const Color(0xFFFFB3BA),
             ),
           ],
         ),

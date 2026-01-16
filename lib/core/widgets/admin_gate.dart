@@ -13,9 +13,11 @@ class PermitGate extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final profile = ref.watch(currentProfileProvider);
+    // Normalização para evitar erros de maiúsculas/minúsculas vindos da DB
+    final userLevel = (profile?.level ?? '').trim().toLowerCase();
+    final requiredLevel = value.trim().toLowerCase();
 
-    // Se for Admin, tem sempre permissão. Caso contrário, verifica se o nível coincide.
-    final isPermitted = profile?.level == 'Admin' || profile?.level == value;
+    final isPermitted = userLevel == 'admin' || userLevel == requiredLevel;
 
     if (!isPermitted) return const SizedBox.shrink();
     return child;

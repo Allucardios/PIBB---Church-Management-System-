@@ -2,6 +2,7 @@ class Income {
   final int? id;
   final DateTime date;
   final DateTime? createdAt;
+  final int? accountId; // Destination account
 
   final double tithes;
   final double offerings;
@@ -16,6 +17,7 @@ class Income {
     this.id,
     required this.date,
     this.createdAt,
+    this.accountId,
     required this.tithes,
     required this.offerings,
     required this.missions,
@@ -27,9 +29,11 @@ class Income {
 
   factory Income.fromJson(Map<String, dynamic> json) => Income(
     id: json['id'] ?? 0,
-    date: DateTime.tryParse(json['date'] ?? "") ?? DateTime.now(), // SAFE
+    date: DateTime.tryParse(json['date'] ?? "") ?? DateTime.now(),
     createdAt:
-        DateTime.tryParse(json['createdAt'] ?? "") ?? DateTime.now(), // SAFE
+        DateTime.tryParse(json['createdAt'] ?? "") ??
+        DateTime.fromMillisecondsSinceEpoch(0),
+    accountId: json['account_id'],
     tithes: (json['tithes'] ?? 0).toDouble(),
     offerings: (json['offerings'] ?? 0).toDouble(),
     missions: (json['missions'] ?? 0).toDouble(),
@@ -41,6 +45,7 @@ class Income {
 
   Map<String, dynamic> toJson() => {
     'date': date.toIso8601String(),
+    'account_id': accountId,
     'tithes': tithes,
     'offerings': offerings,
     'missions': missions,

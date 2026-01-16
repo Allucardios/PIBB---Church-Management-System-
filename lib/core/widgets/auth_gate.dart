@@ -18,8 +18,14 @@ class AuthGate extends ConsumerWidget {
 
     if (user == null) return const SignIn();
 
+    // Enquanto o perfil não carregar, mostramos um loader para evitar que a UI
+    // assuma que o utilizador não tem permissões.
+    if (profile == null) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
     // If profile is loaded and user is inactive, they must stay at SignIn
-    if (profile != null && profile.active == false) {
+    if (profile.active == false) {
       return const SignIn();
     }
 

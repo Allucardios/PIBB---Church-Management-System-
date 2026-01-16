@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 // Local Imports
+import '../../data/providers/account_provider.dart';
 import '../../data/providers/auth_provider.dart';
 import '../../data/providers/finance_provider.dart';
 import 'dashboard.dart';
@@ -21,6 +22,15 @@ class HomePage extends ConsumerStatefulWidget {
 
 class _HomePageState extends ConsumerState<HomePage> {
   int _page = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    // Ensure default accounts exist
+    Future.microtask(() {
+      ref.read(accountServiceProvider.notifier).ensureDefaultAccount();
+    });
+  }
 
   //methods
   void _goToPage(int index) => setState(() {

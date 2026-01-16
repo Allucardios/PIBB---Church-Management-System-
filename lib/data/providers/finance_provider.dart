@@ -7,40 +7,106 @@ import '../../core/const/app_config.dart';
 import '../../core/const/functions.dart';
 import '../models/expense.dart';
 import '../models/income.dart';
-import '../providers/auth_provider.dart';
 
 part 'finance_provider.g.dart';
 
-/// Income List Stream Provider
+/// Income List Provider (Yearly for Dashboard) - Server Side Filtered
 @riverpod
-Stream<List<Income>> incomeStream(IncomeStreamRef ref) {
-  return client
+Future<List<Income>> incomeStream(IncomeStreamRef ref) async {
+  final year = ref.watch(selectedYearProvider);
+  final startOfYear = DateTime(year, 1, 1).toIso8601String();
+  final endOfYear = DateTime(year, 12, 31, 23, 59, 59).toIso8601String();
+
+  final data = await client
       .from(AppConfig.tableIncomes)
-      .stream(primaryKey: ['id'])
-      .order('date', ascending: false)
-      .map((rows) => rows.map((e) => Income.fromJson(e)).toList())
-      .handleError((err) {
-        if (err.toString().contains('invalidjwttoken') ||
-            err.toString().contains('JWT expired')) {
-          ref.read(authServiceProvider.notifier).signOut();
-        }
-      });
+      .select()
+      .gte('date', startOfYear)
+      .lte('date', endOfYear)
+      .order('date', ascending: false);
+
+  return data.map((e) => Income.fromJson(e)).toList();
 }
 
-/// Expense List Stream Provider
+/// Independent Date Filter for Income List (Month/Year)
 @riverpod
-Stream<List<Expense>> expenseStream(ExpenseStreamRef ref) {
-  return client
+class IncomeListFilter extends _$IncomeListFilter {
+  @override
+  DateTime build() => DateTime.now();
+  void setDate(DateTime date) => state = date;
+}
+
+/// Income List Provider (Monthly for List) - Server Side Filtered
+@riverpod
+Future<List<Income>> listIncomeStream(ListIncomeStreamRef ref) async {
+  final date = ref.watch(incomeListFilterProvider);
+  final startOfMonth = DateTime(date.year, date.month, 1).toIso8601String();
+  // Calculate last day of month
+  final endOfMonth = DateTime(
+    date.year,
+    date.month + 1,
+    0,
+    23,
+    59,
+    59,
+  ).toIso8601String();
+
+  final data = await client
+      .from(AppConfig.tableIncomes)
+      .select()
+      .gte('date', startOfMonth)
+      .lte('date', endOfMonth)
+      .order('date', ascending: false);
+
+  return data.map((e) => Income.fromJson(e)).toList();
+}
+
+/// Independent Date Filter for Expense List (Month/Year)
+@riverpod
+class ExpenseListFilter extends _$ExpenseListFilter {
+  @override
+  DateTime build() => DateTime.now();
+  void setDate(DateTime date) => state = date;
+}
+
+/// Expense List Provider (Monthly for List) - Server Side Filtered
+@riverpod
+Future<List<Expense>> listExpenseStream(ListExpenseStreamRef ref) async {
+  final date = ref.watch(expenseListFilterProvider);
+  final startOfMonth = DateTime(date.year, date.month, 1).toIso8601String();
+  final endOfMonth = DateTime(
+    date.year,
+    date.month + 1,
+    0,
+    23,
+    59,
+    59,
+  ).toIso8601String();
+
+  final data = await client
       .from(AppConfig.tableExpenses)
-      .stream(primaryKey: ['id'])
-      .order('date', ascending: false)
-      .map((rows) => rows.map((e) => Expense.fromJson(e)).toList())
-      .handleError((err) {
-        if (err.toString().contains('invalidjwttoken') ||
-            err.toString().contains('JWT expired')) {
-          ref.read(authServiceProvider.notifier).signOut();
-        }
-      });
+      .select()
+      .gte('date', startOfMonth)
+      .lte('date', endOfMonth)
+      .order('date', ascending: false);
+
+  return data.map((e) => Expense.fromJson(e)).toList();
+}
+
+/// Expense List Provider (Yearly for Dashboard) - Server Side Filtered
+@riverpod
+Future<List<Expense>> expenseStream(ExpenseStreamRef ref) async {
+  final year = ref.watch(selectedYearProvider);
+  final startOfYear = DateTime(year, 1, 1).toIso8601String();
+  final endOfYear = DateTime(year, 12, 31, 23, 59, 59).toIso8601String();
+
+  final data = await client
+      .from(AppConfig.tableExpenses)
+      .select()
+      .gte('date', startOfYear)
+      .lte('date', endOfYear)
+      .order('date', ascending: false);
+
+  return data.map((e) => Expense.fromJson(e)).toList();
 }
 
 /// Selected Month Provider
@@ -76,29 +142,133 @@ class FinanceService extends _$FinanceService {
   void build() {}
 
   /// Create
-  Future<void> addIncome(Income inc) async =>
-      await client.from(AppConfig.tableIncomes).insert(inc.toJson());
+  Future<void> addIncome(Income inc) async {
+    // 1. Use fixed ID 1 for "Caixa"
+    const caixaId = 1;
 
-  Future<void> addExpense(Expense exp) async =>
-      await client.from(AppConfig.tableExpenses).insert(exp.toJson());
+    // 2. Add Income with account_id
+    final incData = inc.toJson();
+    incData['account_id'] = caixaId;
+
+    final insertedIncome = await client
+        .from(AppConfig.tableIncomes)
+        .insert(incData)
+        .select()
+        .single();
+
+    // 3. Create Transaction
+    await client.from('account_transactions').insert({
+      'account_id': caixaId,
+      'amount': inc.totalIncome(),
+      'type': 'income',
+      'description': 'Entrada de Receita: ${formatDate(inc.date)}',
+      'date': inc.date.toIso8601String(),
+      'reference_id': insertedIncome['id'],
+    });
+
+    // Invalidate Providers to Refresh UI
+    ref.invalidate(incomeStreamProvider);
+    ref.invalidate(listIncomeStreamProvider);
+  }
+
+  Future<void> addExpense(Expense exp) async {
+    // 1. Add Expense
+    final insertedExpense = await client
+        .from(AppConfig.tableExpenses)
+        .insert(exp.toJson())
+        .select()
+        .single();
+
+    // 2. Create Transaction (Negative amount)
+    if (exp.accountId != null) {
+      await client.from('account_transactions').insert({
+        'account_id': exp.accountId,
+        'amount': -exp.amount,
+        'type': 'expense',
+        'description': 'Saída de Despesa: ${exp.category}',
+        'date': exp.date.toIso8601String(),
+        'reference_id': insertedExpense['id'],
+      });
+    }
+
+    // Invalidate Providers
+    ref.invalidate(expenseStreamProvider);
+    ref.invalidate(listExpenseStreamProvider);
+  }
 
   /// Update
-  Future<void> updateIncome(Income inc) async => await client
-      .from(AppConfig.tableIncomes)
-      .update(inc.toJson())
-      .eq('id', inc.id!);
+  Future<void> updateIncome(Income inc) async {
+    await client
+        .from(AppConfig.tableIncomes)
+        .update(inc.toJson())
+        .eq('id', inc.id!);
 
-  Future<void> updateExpense(Expense exp) async => await client
-      .from(AppConfig.tableExpenses)
-      .update(exp.toJson())
-      .eq('id', exp.id!);
+    // Update Transaction amount and account
+    if (inc.accountId != null) {
+      await client
+          .from('account_transactions')
+          .update({'amount': inc.totalIncome(), 'account_id': inc.accountId})
+          .eq('type', 'income')
+          .eq('reference_id', inc.id!);
+    } else {
+      await client
+          .from('account_transactions')
+          .update({'amount': inc.totalIncome()})
+          .eq('type', 'income')
+          .eq('reference_id', inc.id!);
+    }
+
+    // Invalidate Providers
+    ref.invalidate(incomeStreamProvider);
+    ref.invalidate(listIncomeStreamProvider);
+  }
+
+  Future<void> updateExpense(Expense exp) async {
+    await client
+        .from(AppConfig.tableExpenses)
+        .update(exp.toJson())
+        .eq('id', exp.id!);
+
+    // Update Transaction amount and account
+    if (exp.accountId != null) {
+      await client
+          .from('account_transactions')
+          .update({'amount': -exp.amount, 'account_id': exp.accountId})
+          .eq('type', 'expense')
+          .eq('reference_id', exp.id!);
+    }
+
+    // Invalidate Providers
+    ref.invalidate(expenseStreamProvider);
+    ref.invalidate(listExpenseStreamProvider);
+  }
 
   /// Delete
-  Future<void> deleteIncome(int id) async =>
-      await client.from(AppConfig.tableIncomes).delete().eq('id', id);
+  Future<void> deleteIncome(int id) async {
+    await client.from(AppConfig.tableIncomes).delete().eq('id', id);
+    await client
+        .from('account_transactions')
+        .delete()
+        .eq('type', 'income')
+        .eq('reference_id', id);
 
-  Future<void> deleteExpense(int id) async =>
-      await client.from(AppConfig.tableExpenses).delete().eq('id', id);
+    // Invalidate Providers
+    ref.invalidate(incomeStreamProvider);
+    ref.invalidate(listIncomeStreamProvider);
+  }
+
+  Future<void> deleteExpense(int id) async {
+    await client.from(AppConfig.tableExpenses).delete().eq('id', id);
+    await client
+        .from('account_transactions')
+        .delete()
+        .eq('type', 'expense')
+        .eq('reference_id', id);
+
+    // Invalidate Providers
+    ref.invalidate(expenseStreamProvider);
+    ref.invalidate(listExpenseStreamProvider);
+  }
 }
 
 /// Financial Calculations Provider

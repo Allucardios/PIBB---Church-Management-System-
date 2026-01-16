@@ -6,7 +6,7 @@ part of 'category_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$categoriesStreamHash() => r'4acca7acd51cf170853a5317fe7253bf481c50e5';
+String _$categoriesStreamHash() => r'57a0e8258d18a002e40c06bcdd52cdeb76d3e098';
 
 /// Categories Stream Provider
 ///
@@ -26,7 +26,7 @@ final categoriesStreamProvider =
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef CategoriesStreamRef = AutoDisposeStreamProviderRef<List<Categories>>;
-String _$categoryServiceHash() => r'bbe797ec2d10478e1ca7e489c753bf7471d2ee32';
+String _$categoryServiceHash() => r'0b890b5f7a579dd62564b0411c8ab8c5f3a26af5';
 
 /// Category Service Provider
 ///

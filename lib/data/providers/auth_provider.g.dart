@@ -6,7 +6,7 @@ part of 'auth_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$authNotifierHash() => r'7248d273a23949d98ceb097a67a7bbf84dafcca6';
+String _$authNotifierHash() => r'62e0d278bca45ec975eb0295b7219dda4b67f676';
 
 /// Auth State Notifier
 ///
@@ -61,7 +61,7 @@ final authErrorNotifierProvider =
     );
 
 typedef _$AuthErrorNotifier = AutoDisposeNotifier<String>;
-String _$authServiceHash() => r'fbdbb742d63837494682ca63f14c73b42515418b';
+String _$authServiceHash() => r'875759cea42318bae902631ba809a707270cf25f';
 
 /// Auth Service Provider
 ///

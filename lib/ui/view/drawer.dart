@@ -8,10 +8,12 @@ import '../../core/const/theme.dart';
 import '../../core/widgets/admin_gate.dart';
 import '../../core/widgets/responsive.dart';
 import '../../data/providers/profile_provider.dart';
+import '../home/accounts.dart';
 import '../home/categories.dart';
 import '../home/profile.dart';
 import '../home/report.dart';
 import '../home/users.dart';
+import 'about.dart';
 
 class MyDrawer extends ConsumerWidget {
   final Function(int)? onPageChanged;
@@ -30,9 +32,7 @@ class MyDrawer extends ConsumerWidget {
 
     return Container(
       key: widgetKey,
-      width: isDesktop
-          ? 300
-          : null, // Width is managed by Scaffold for mobile drawer
+      width: isDesktop ? 300 : size.width * 0.75,
       decoration: BoxDecoration(
         color: theme.canvasColor,
         border: isDesktop
@@ -109,8 +109,8 @@ class MyDrawer extends ConsumerWidget {
                           function: () => Navigator.of(context).push(
                             MaterialPageRoute(builder: (_) => const UserPage()),
                           ),
-                          title: 'Usuarios',
-                          subtitle: 'Gerir Usuarios',
+                          title: 'Utilizadores',
+                          subtitle: 'Gerir Utilizadores',
                           icon: Icons.groups_outlined,
                         ),
                       ),
@@ -122,10 +122,31 @@ class MyDrawer extends ConsumerWidget {
                               builder: (_) => const CategoryPage(),
                             ),
                           ),
-                          title: 'Categoria',
+                          title: 'Categorias',
                           subtitle: 'Gerir Categorias',
                           icon: Icons.category_outlined,
                         ),
+                      ),
+                      PermitGate(
+                        value: 'Manager',
+                        child: _listTile(
+                          function: () => Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const AccountPage(),
+                            ),
+                          ),
+                          title: 'Contas',
+                          subtitle: 'Gestão de Contas',
+                          icon: Icons.account_balance_wallet_outlined,
+                        ),
+                      ),
+                      _listTile(
+                        function: () => Navigator.of(context).push(
+                          MaterialPageRoute(builder: (_) => const AboutPage()),
+                        ),
+                        title: 'Sobre',
+                        subtitle: 'Manual e Info',
+                        icon: Icons.info_outline,
                       ),
                       _listTile(
                         function: () async {

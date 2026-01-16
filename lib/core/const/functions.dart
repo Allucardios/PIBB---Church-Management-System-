@@ -1,5 +1,6 @@
 //Libraries
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 //Local Imports
@@ -23,18 +24,16 @@ const months = [
 void errorDialog(BuildContext context, String title, String sms, Color cor) {
   showDialog(
     context: context,
-    builder: (_) =>
-        AlertDialog(
-          title: Text(title),
-          content: Text(sms),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text(
-                  'Cancelar', style: TextStyle(color: Colors.redAccent)),
-            ),
-          ],
+    builder: (_) => AlertDialog(
+      title: Text(title),
+      content: Text(sms),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text('Cancelar', style: TextStyle(color: Colors.redAccent)),
         ),
+      ],
+    ),
   );
 }
 
@@ -61,8 +60,7 @@ String formatDate(DateTime date) {
   ];
 
   final weekdayName = weekdays[date.weekday - 1];
-  return "$weekdayName, ${date.day.toString().padLeft(2, '0')}/${date.month
-      .toString().padLeft(2, '0')}/${date.year}";
+  return "$weekdayName, ${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}";
 }
 
 String formatDateComplete(DateTime date) {
@@ -77,32 +75,18 @@ String formatDateComplete(DateTime date) {
   ];
 
   final weekdayName = weekdays[date.weekday - 1];
-  return "$weekdayName, ${date.day.toString().padLeft(2, '0')} de ${months[date
-      .month - 1]} de ${date.year}";
+  return "$weekdayName, ${date.day.toString().padLeft(2, '0')} de ${months[date.month - 1]} de ${date.year}";
 }
 
 String formatDateTF(DateTime date) {
-  return " ${date.day.toString().padLeft(2, '0')}/${date.month
-      .toString()
-      .padLeft(2, '0')}/${date.year}";
+  return " ${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}";
 }
 
-String formatKwanza(double value) {
-  final parts = value.toStringAsFixed(2).split('.');
-  String integerPart = parts[0];
-  final decimalPart = parts[1];
-
-  final buffer = StringBuffer();
-  for (int i = 0; i < integerPart.length; i++) {
-    final reverseIndex = integerPart.length - i;
-    buffer.write(integerPart[i]);
-    if (reverseIndex > 1 && reverseIndex % 3 == 1) {
-      buffer.write('.');
-    }
-  }
-
-  return "${buffer.toString()},$decimalPart Kz";
-}
+String formatKz(double value) => NumberFormat.currency(
+  symbol: 'Kz ',
+  decimalDigits: 2,
+  locale: 'pt_PT',
+).format(value);
 
 double toDouble(String? value) {
   if (value == null || value.isEmpty) return 0;

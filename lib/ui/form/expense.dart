@@ -11,6 +11,7 @@ import '../../core/widgets/textfield.dart';
 import '../../data/models/expense.dart';
 import '../../data/providers/category_provider.dart';
 import '../../data/providers/finance_provider.dart';
+import '../../data/providers/account_provider.dart';
 
 class ExpenseForm extends ConsumerStatefulWidget {
   const ExpenseForm({super.key, this.expense});
@@ -23,6 +24,7 @@ class ExpenseForm extends ConsumerStatefulWidget {
 class _ExpenseFormState extends ConsumerState<ExpenseForm> {
   // Variables
   late DateTime _date;
+  int? _selectedAccountId;
 
   // TextControllers
   final date = TextEditingController();
@@ -38,6 +40,7 @@ class _ExpenseFormState extends ConsumerState<ExpenseForm> {
     amount: toDouble(amount.text),
     date: _date,
     originType: origin.text,
+    accountId: _selectedAccountId,
     obs: obs.text,
   );
 
@@ -46,6 +49,7 @@ class _ExpenseFormState extends ConsumerState<ExpenseForm> {
     super.initState();
     if (widget.expense != null) {
       _date = widget.expense!.date;
+      _selectedAccountId = widget.expense!.accountId;
       cat.text = widget.expense!.category;
       amount.text = widget.expense!.amount.toString();
       origin.text = widget.expense!.originType;
@@ -69,6 +73,7 @@ class _ExpenseFormState extends ConsumerState<ExpenseForm> {
   @override
   Widget build(BuildContext context) {
     final categoriesAsync = ref.watch(categoriesStreamProvider);
+    final accountsAsync = ref.watch(accountsStreamProvider);
     final isEditing = widget.expense != null;
 
     return Scaffold(
@@ -90,6 +95,52 @@ class _ExpenseFormState extends ConsumerState<ExpenseForm> {
                     hint: 'Natureza da despesa',
                     icon: Icons.monetization_on_outlined,
                     label: 'Descrição',
+                  ),
+                  accountsAsync.when(
+                    data: (accounts) {
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Conta de Origem',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: AppTheme.primary,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          DropdownButtonFormField<int>(
+                            value: _selectedAccountId,
+                            items: accounts
+                                .map(
+                                  (a) => DropdownMenuItem(
+                                    value: a.id,
+                                    child: Text(a.name),
+                                  ),
+                                )
+                                .toList(),
+                            onChanged: (val) =>
+                                setState(() => _selectedAccountId = val),
+                            decoration: InputDecoration(
+                              filled: true,
+                              fillColor: Colors.white,
+                              prefixIcon: const Icon(
+                                Icons.account_balance_wallet_outlined,
+                                color: AppTheme.primary,
+                              ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            validator: (val) =>
+                                val == null ? 'Selecione uma conta' : null,
+                          ),
+                        ],
+                      );
+                    },
+                    loading: () => const CircularProgressIndicator(),
+                    error: (err, _) => Text('Erro ao carregar contas: $err'),
                   ),
                   categoriesAsync.when(
                     data: (categories) {
@@ -129,6 +180,48 @@ class _ExpenseFormState extends ConsumerState<ExpenseForm> {
                     child: ElevatedButton(
                       onPressed: () async {
                         if (_key.currentState!.validate()) {
+                          // Check balance if not editing
+                          if (!isEditing) {
+                            final txs = await ref.read(
+                              accountTransactionsStreamProvider(
+                                _selectedAccountId!,
+                              ).future,
+                            );
+                            final accounts = await ref.read(
+                              accountsStreamProvider.future,
+                            );
+                            final account = accounts.firstWhere(
+                              (a) => a.id == _selectedAccountId,
+                            );
+                            double balance = account.balance;
+                            for (var tx in txs) {
+                              if (tx.description != 'Saldo Inicial') {
+                                balance += tx.amount;
+                              }
+                            }
+
+                            if (balance < toDouble(amount.text)) {
+                              if (mounted) {
+                                showDialog(
+                                  context: context,
+                                  builder: (context) => AlertDialog(
+                                    title: const Text('Saldo Insuficiente'),
+                                    content: Text(
+                                      'O saldo da conta selecionada é inferior ao valor da despesa.\nSaldo: $balance',
+                                    ),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () => Navigator.pop(context),
+                                        child: const Text('OK'),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              }
+                              return;
+                            }
+                          }
+
                           if (isEditing) {
                             await ref
                                 .read(financeServiceProvider.notifier)

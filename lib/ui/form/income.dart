@@ -44,6 +44,7 @@ class _IncomeFormState extends ConsumerState<IncomeForm> {
   // Populate the document income
   Income doc() => Income(
     id: widget.income?.id,
+    accountId: widget.income?.accountId,
     date: _date,
     tithes: toDouble(tithes.text),
     offerings: toDouble(offerings.text),

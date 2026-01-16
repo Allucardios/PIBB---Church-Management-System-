@@ -6,13 +6,13 @@ part of 'finance_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$incomeStreamHash() => r'f821afb4f71dd65649be7101531c552e6980d9f7';
+String _$incomeStreamHash() => r'd624b2ee670b36ea405d89b5394ebcec06847b3a';
 
-/// Income List Stream Provider
+/// Income List Provider (Yearly for Dashboard) - Server Side Filtered
 ///
 /// Copied from [incomeStream].
 @ProviderFor(incomeStream)
-final incomeStreamProvider = AutoDisposeStreamProvider<List<Income>>.internal(
+final incomeStreamProvider = AutoDisposeFutureProvider<List<Income>>.internal(
   incomeStream,
   name: r'incomeStreamProvider',
   debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
@@ -24,14 +24,54 @@ final incomeStreamProvider = AutoDisposeStreamProvider<List<Income>>.internal(
 
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
-typedef IncomeStreamRef = AutoDisposeStreamProviderRef<List<Income>>;
-String _$expenseStreamHash() => r'474e4c7533800b44fe120f41e53c3ab63f78f623';
+typedef IncomeStreamRef = AutoDisposeFutureProviderRef<List<Income>>;
+String _$listIncomeStreamHash() => r'75e89b7be2333afa0127b43d040dc9e96cce0927';
 
-/// Expense List Stream Provider
+/// Income List Provider (Monthly for List) - Server Side Filtered
+///
+/// Copied from [listIncomeStream].
+@ProviderFor(listIncomeStream)
+final listIncomeStreamProvider =
+    AutoDisposeFutureProvider<List<Income>>.internal(
+      listIncomeStream,
+      name: r'listIncomeStreamProvider',
+      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+          ? null
+          : _$listIncomeStreamHash,
+      dependencies: null,
+      allTransitiveDependencies: null,
+    );
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef ListIncomeStreamRef = AutoDisposeFutureProviderRef<List<Income>>;
+String _$listExpenseStreamHash() => r'e3d765fcadf9a522714f31fc0a1ba47292ff7c7a';
+
+/// Expense List Provider (Monthly for List) - Server Side Filtered
+///
+/// Copied from [listExpenseStream].
+@ProviderFor(listExpenseStream)
+final listExpenseStreamProvider =
+    AutoDisposeFutureProvider<List<Expense>>.internal(
+      listExpenseStream,
+      name: r'listExpenseStreamProvider',
+      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+          ? null
+          : _$listExpenseStreamHash,
+      dependencies: null,
+      allTransitiveDependencies: null,
+    );
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef ListExpenseStreamRef = AutoDisposeFutureProviderRef<List<Expense>>;
+String _$expenseStreamHash() => r'14fcddb18299f69d36f8b08b862080a804ee9da7';
+
+/// Expense List Provider (Yearly for Dashboard) - Server Side Filtered
 ///
 /// Copied from [expenseStream].
 @ProviderFor(expenseStream)
-final expenseStreamProvider = AutoDisposeStreamProvider<List<Expense>>.internal(
+final expenseStreamProvider = AutoDisposeFutureProvider<List<Expense>>.internal(
   expenseStream,
   name: r'expenseStreamProvider',
   debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
@@ -43,7 +83,43 @@ final expenseStreamProvider = AutoDisposeStreamProvider<List<Expense>>.internal(
 
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
-typedef ExpenseStreamRef = AutoDisposeStreamProviderRef<List<Expense>>;
+typedef ExpenseStreamRef = AutoDisposeFutureProviderRef<List<Expense>>;
+String _$incomeListFilterHash() => r'772f3b027c7a1a98bc0bcdc91d5808bcdd113d95';
+
+/// Independent Date Filter for Income List (Month/Year)
+///
+/// Copied from [IncomeListFilter].
+@ProviderFor(IncomeListFilter)
+final incomeListFilterProvider =
+    AutoDisposeNotifierProvider<IncomeListFilter, DateTime>.internal(
+      IncomeListFilter.new,
+      name: r'incomeListFilterProvider',
+      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+          ? null
+          : _$incomeListFilterHash,
+      dependencies: null,
+      allTransitiveDependencies: null,
+    );
+
+typedef _$IncomeListFilter = AutoDisposeNotifier<DateTime>;
+String _$expenseListFilterHash() => r'8501659d145e05a3f3cdbfe21be31b49d705f469';
+
+/// Independent Date Filter for Expense List (Month/Year)
+///
+/// Copied from [ExpenseListFilter].
+@ProviderFor(ExpenseListFilter)
+final expenseListFilterProvider =
+    AutoDisposeNotifierProvider<ExpenseListFilter, DateTime>.internal(
+      ExpenseListFilter.new,
+      name: r'expenseListFilterProvider',
+      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+          ? null
+          : _$expenseListFilterHash,
+      dependencies: null,
+      allTransitiveDependencies: null,
+    );
+
+typedef _$ExpenseListFilter = AutoDisposeNotifier<DateTime>;
 String _$selectedMonthHash() => r'699be852aa020a908de00d43afdec0f9c535f81a';
 
 /// Selected Month Provider
@@ -62,7 +138,7 @@ final selectedMonthProvider =
     );
 
 typedef _$SelectedMonth = AutoDisposeNotifier<DateTime>;
-String _$selectedYearHash() => r'795e5de848b66aeadee7923c2a91fb36151db85a';
+String _$selectedYearHash() => r'14bb43e7a1f590e0d860f69af6a73051e8667643';
 
 /// Selected Year Provider
 ///
@@ -80,7 +156,7 @@ final selectedYearProvider =
     );
 
 typedef _$SelectedYear = AutoDisposeNotifier<int>;
-String _$financeServiceHash() => r'53747378ab7a48273c6cefbef348e7696ed3abbd';
+String _$financeServiceHash() => r'9ac47febebab235abdd31f9c5cd69a6b3b04fbf2';
 
 /// Finance Service Provider
 ///
