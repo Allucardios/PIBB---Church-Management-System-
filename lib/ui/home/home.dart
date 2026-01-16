@@ -59,10 +59,12 @@ class _HomePageState extends ConsumerState<HomePage> {
       }
     });
 
-    return Scaffold(
-      body: Row(
-        children: [
-          if (isDesktop)
+    final bodyContent = IndexedStack(index: _page, children: _screens);
+
+    if (isDesktop) {
+      return Scaffold(
+        body: Row(
+          children: [
             Builder(
               builder: (context) {
                 final width = MediaQuery.of(context).size.width;
@@ -72,19 +74,23 @@ class _HomePageState extends ConsumerState<HomePage> {
                 );
               },
             ),
-          Expanded(
-            child: IndexedStack(index: _page, children: _screens),
-          ),
-        ],
+            Expanded(child: bodyContent),
+          ],
+        ),
+      );
+    }
+
+    return Scaffold(
+      body: bodyContent,
+      bottomNavigationBar: MediaQuery(
+        data: MediaQuery.of(context).copyWith(textScaler: TextScaler.noScaling),
+        child: BottomNavigationBar(
+          type: BottomNavigationBarType.fixed,
+          currentIndex: _page,
+          onTap: _goToPage,
+          items: _navs,
+        ),
       ),
-      bottomNavigationBar: isDesktop
-          ? null
-          : BottomNavigationBar(
-              type: BottomNavigationBarType.fixed,
-              currentIndex: _page,
-              onTap: _goToPage,
-              items: _navs,
-            ),
     );
   }
 

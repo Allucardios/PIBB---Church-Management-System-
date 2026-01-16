@@ -9,12 +9,13 @@ import '../../core/widgets/drop_tf.dart';
 import '../../core/widgets/money_tf.dart';
 import '../../core/widgets/textfield.dart';
 import '../../data/models/expense.dart';
+import '../../data/providers/account_provider.dart';
 import '../../data/providers/category_provider.dart';
 import '../../data/providers/finance_provider.dart';
-import '../../data/providers/account_provider.dart';
 
 class ExpenseForm extends ConsumerStatefulWidget {
   const ExpenseForm({super.key, this.expense});
+
   final Expense? expense;
 
   @override
@@ -30,7 +31,6 @@ class _ExpenseFormState extends ConsumerState<ExpenseForm> {
   final date = TextEditingController();
   final cat = TextEditingController();
   final amount = TextEditingController();
-  final origin = TextEditingController();
   final obs = TextEditingController();
   final _key = GlobalKey<FormState>();
 
@@ -39,7 +39,7 @@ class _ExpenseFormState extends ConsumerState<ExpenseForm> {
     category: cat.text,
     amount: toDouble(amount.text),
     date: _date,
-    originType: origin.text,
+    originType: 'null',
     accountId: _selectedAccountId,
     obs: obs.text,
   );
@@ -52,7 +52,6 @@ class _ExpenseFormState extends ConsumerState<ExpenseForm> {
       _selectedAccountId = widget.expense!.accountId;
       cat.text = widget.expense!.category;
       amount.text = widget.expense!.amount.toString();
-      origin.text = widget.expense!.originType;
       obs.text = widget.expense!.obs ?? '';
     } else {
       _date = DateTime.now();
@@ -65,7 +64,6 @@ class _ExpenseFormState extends ConsumerState<ExpenseForm> {
     date.dispose();
     cat.dispose();
     amount.dispose();
-    origin.dispose();
     obs.dispose();
     super.dispose();
   }
@@ -167,13 +165,6 @@ class _ExpenseFormState extends ConsumerState<ExpenseForm> {
                     hint: 'Digite a Quantia',
                     icon: Icons.money_off_outlined,
                     label: 'Custo da Despesa',
-                  ),
-                  DropDownTextField(
-                    ctrl: origin,
-                    label: 'Origem ',
-                    list: const ['Numerario', 'Transferencia'],
-                    icon: Icons.account_balance_outlined,
-                    hint: 'Selecione a Origem',
                   ),
                   Padding(
                     padding: const EdgeInsets.all(12),

@@ -43,23 +43,34 @@ class _DashBoardState extends ConsumerState<DashBoard>
 
               //
               _sectionTitle('Resumo do Mês'),
-              _buildMonthlyCards(),
-              if (isDesktop)
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+              Card(
+                elevation: 4,
+                child: Column(
                   children: [
-                    Expanded(child: _buildMonthlyIncomeVsExpensesChart()),
-                    Expanded(child: _buildExpensesByCategoryChart()),
+                    _buildMonthlyCards(),
+                    if (isDesktop)
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(child: _buildMonthlyIncomeVsExpensesChart()),
+                          Expanded(child: _buildExpensesByCategoryChart()),
+                        ],
+                      )
+                    else ...[
+                      _buildMonthlyIncomeVsExpensesChart(),
+                      _buildExpensesByCategoryChart(),
+                    ],
                   ],
-                )
-              else ...[
-                _buildMonthlyIncomeVsExpensesChart(),
-                _buildExpensesByCategoryChart(),
-              ],
+                ),
+              ),
               //
               _sectionTitle('Resumo do Ano'),
-              _buildYearlyCards(),
-              _buildYearlyEvolutionChart(),
+              Card(
+                elevation: 4,
+                child: Column(
+                  children: [_buildYearlyCards(), _buildYearlyEvolutionChart()],
+                ),
+              ),
             ],
           ),
         ),
@@ -69,57 +80,54 @@ class _DashBoardState extends ConsumerState<DashBoard>
 
   Widget _periodSelector() {
     final month = ref.watch(selectedMonthProvider);
-    return Card(
-      elevation: 2,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            IconButton(
-              icon: const Icon(Icons.chevron_left, color: Colors.redAccent),
-              onPressed: () {
-                ref
-                    .read(selectedMonthProvider.notifier)
-                    .setMonth(DateTime(month.year, month.month - 1));
-              },
-            ),
-            InkWell(
-              onTap: () async {
-                final picked = await showDatePicker(
-                  context: context,
-                  initialDate: month,
-                  firstDate: DateTime(2020),
-                  lastDate: DateTime(2100),
-                  initialDatePickerMode: DatePickerMode.year,
-                );
-                if (picked != null) {
-                  ref.read(selectedMonthProvider.notifier).setMonth(picked);
-                }
-              },
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                child: Text(
-                  DateFormat('MMMM yyyy', 'pt_PT').format(month).toUpperCase(),
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1,
-                    color: AppTheme.primary,
-                  ),
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          IconButton(
+            icon: const Icon(Icons.chevron_left, color: Colors.redAccent),
+            onPressed: () {
+              ref
+                  .read(selectedMonthProvider.notifier)
+                  .setMonth(DateTime(month.year, month.month - 1));
+            },
+          ),
+          InkWell(
+            onTap: () async {
+              final picked = await showDatePicker(
+                context: context,
+                initialDate: month,
+                firstDate: DateTime(2020),
+                lastDate: DateTime(2100),
+                initialDatePickerMode: DatePickerMode.year,
+              );
+              if (picked != null) {
+                ref.read(selectedMonthProvider.notifier).setMonth(picked);
+              }
+            },
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              child: Text(
+                DateFormat('MMMM yyyy', 'pt_PT').format(month).toUpperCase(),
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1,
+                  color: AppTheme.primary,
                 ),
               ),
             ),
-            IconButton(
-              icon: const Icon(Icons.chevron_right, color: Colors.blue),
-              onPressed: () {
-                ref
-                    .read(selectedMonthProvider.notifier)
-                    .setMonth(DateTime(month.year, month.month + 1));
-              },
-            ),
-          ],
-        ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.chevron_right, color: Colors.blue),
+            onPressed: () {
+              ref
+                  .read(selectedMonthProvider.notifier)
+                  .setMonth(DateTime(month.year, month.month + 1));
+            },
+          ),
+        ],
       ),
     );
   }

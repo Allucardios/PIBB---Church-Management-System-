@@ -119,11 +119,6 @@ class ViewExpense extends ConsumerWidget {
                 accountName,
                 Icons.account_balance_wallet_outlined,
               ),
-              _valueTile(
-                "Tipo de Movimento",
-                exp.originType,
-                Icons.account_balance_outlined,
-              ),
             ],
           ),
           Padding(
@@ -141,7 +136,7 @@ class ViewExpense extends ConsumerWidget {
                   style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: Colors.blueGrey,
+                    color: Colors.redAccent,
                   ),
                 ),
               ),
