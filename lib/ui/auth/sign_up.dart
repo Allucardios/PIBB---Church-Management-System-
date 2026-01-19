@@ -34,7 +34,9 @@ class _SignUpState extends ConsumerState<SignUp> {
 
     if (_key.currentState!.validate()) {
       if (conf == pass) {
-        await ref.read(authServiceProvider.notifier).signUp(name, email, pass);
+        await ref
+            .read(authServiceProvider.notifier)
+            .signUp(name, email, pass, context);
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -64,7 +66,7 @@ class _SignUpState extends ConsumerState<SignUp> {
           child: ConstrainedBox(
             constraints: BoxConstraints(
               maxWidth: MediaQuery.of(context).size.width > 600
-                  ? MediaQuery.of(context).size.width * 0.7
+                  ? MediaQuery.of(context).size.width * .6
                   : double.infinity,
             ),
             child: Column(

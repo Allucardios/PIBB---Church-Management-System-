@@ -2,16 +2,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/widgets/responsive.dart';
 // Local Imports
 import '../../data/providers/account_provider.dart';
 import '../../data/providers/auth_provider.dart';
 import '../../data/providers/finance_provider.dart';
+import '../view/drawer.dart';
 import 'dashboard.dart';
 import 'expenses.dart';
 import 'income.dart';
-
-import '../../core/widgets/responsive.dart';
-import '../view/drawer.dart';
 
 class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
@@ -83,7 +82,9 @@ class _HomePageState extends ConsumerState<HomePage> {
     return Scaffold(
       body: bodyContent,
       bottomNavigationBar: MediaQuery(
-        data: MediaQuery.of(context).copyWith(textScaler: TextScaler.noScaling),
+        data: MediaQuery.of(
+          context,
+        ).copyWith(textScaler: TextScaler.linear(1.0)),
         child: BottomNavigationBar(
           type: BottomNavigationBarType.fixed,
           currentIndex: _page,

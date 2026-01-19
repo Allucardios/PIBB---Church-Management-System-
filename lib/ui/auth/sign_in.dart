@@ -11,6 +11,7 @@ import 'sign_up.dart';
 
 class SignIn extends ConsumerStatefulWidget {
   const SignIn({super.key});
+
   @override
   ConsumerState<SignIn> createState() => _SignInState();
 }
@@ -51,7 +52,7 @@ class _SignInState extends ConsumerState<SignIn> {
             child: ConstrainedBox(
               constraints: BoxConstraints(
                 maxWidth: MediaQuery.of(context).size.width > 600
-                    ? MediaQuery.of(context).size.width * 0.7
+                    ? MediaQuery.of(context).size.width * 0.6
                     : double.infinity,
               ),
               child: Column(
@@ -62,7 +63,7 @@ class _SignInState extends ConsumerState<SignIn> {
                     child: Center(
                       child: Image.asset(
                         'assets/icon.png',
-                        height: size.height * .27,
+                        height: size.height * .30,
                       ),
                     ),
                   ),
@@ -178,11 +179,11 @@ class _SignInState extends ConsumerState<SignIn> {
                         const SizedBox(height: 12),
                         const Text(
                           'Desenvolvido por Eng. Silviano da Silva',
-                          style: TextStyle(fontSize: 7, color: Colors.white),
+                          style: TextStyle(fontSize: 12, color: Colors.white),
                         ),
                         const Text(
-                          'PIBB 1.0.1 Versão Beta de teste',
-                          style: TextStyle(fontSize: 7, color: Colors.white),
+                          'PIBB v1.0.1+1',
+                          style: TextStyle(fontSize: 12, color: Colors.white),
                         ),
                       ],
                     ),

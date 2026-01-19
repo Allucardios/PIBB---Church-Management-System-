@@ -61,7 +61,7 @@ final authErrorNotifierProvider =
     );
 
 typedef _$AuthErrorNotifier = AutoDisposeNotifier<String>;
-String _$authServiceHash() => r'875759cea42318bae902631ba809a707270cf25f';
+String _$authServiceHash() => r'4ffd0e90ea4dd9e04052e2431c1e11e7df9a6683';
 
 /// Auth Service Provider
 ///

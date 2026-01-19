@@ -53,6 +53,7 @@ class AuthErrorNotifier extends _$AuthErrorNotifier {
   String build() => '';
 
   void setError(String value) => state = value;
+
   void clearError() => state = '';
 }
 
@@ -108,18 +109,30 @@ class AuthService extends _$AuthService {
     }
   }
 
-  Future<void> signUp(String name, String email, String password) async {
+  Future<void> signUp(
+    String name,
+    String email,
+    String password,
+    context,
+  ) async {
     try {
       ref.read(authLoadingNotifierProvider.notifier).setLoading(true);
       ref.read(authErrorNotifierProvider.notifier).clearError();
 
-      await client.auth.signUp(
+      final response = await client.auth.signUp(
         email: email,
         password: password,
         data: {'name': name, 'email': email},
       );
+
+      if (response.user != null && response.session != null) {
+        if (context.mounted) {
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (_) => const HomePage()),
+          );
+        }
+      }
     } catch (e) {
-      print(e.toString());
       ref
           .read(authErrorNotifierProvider.notifier)
           .setError(_errorSignup(e.toString()));
@@ -128,13 +141,7 @@ class AuthService extends _$AuthService {
     }
   }
 
-  Future<void> signOut() async {
-    try {
-      await client.auth.signOut();
-    } catch (e) {
-      print(e.toString());
-    }
-  }
+  Future<void> signOut() async => await client.auth.signOut();
 
   String _errorLogin(String code) {
     switch (code) {

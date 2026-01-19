@@ -1,16 +1,17 @@
 // Libraries
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 
 // Local Imports
 import '../../core/const/functions.dart';
 import '../../core/widgets/admin_gate.dart';
+import '../../core/widgets/responsive.dart';
 import '../../data/providers/auth_provider.dart';
 import '../../data/providers/finance_provider.dart';
 import '../card/expense.dart';
 import '../form/expense.dart';
 import '../view/drawer.dart';
-import '../../core/widgets/responsive.dart';
 
 class ExpensePage extends ConsumerWidget {
   const ExpensePage({super.key});
@@ -22,69 +23,20 @@ class ExpensePage extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Consumer(
-          builder: (context, ref, child) {
-            final date = ref.watch(expenseListFilterProvider);
-            return Text(
-              'Despesas: ${date.month}/${date.year}',
-              style: const TextStyle(fontSize: 18),
-            );
-          },
-        ),
+        title: Text('D E S P E S A S'),
         leading: isDesktop ? const SizedBox.shrink() : null,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.calendar_month),
-            onPressed: () async {
-              final current = ref.read(expenseListFilterProvider);
-              final picked = await showDatePicker(
-                context: context,
-                initialDate: current,
-                firstDate: DateTime(2020),
-                lastDate: DateTime(2100),
-                helpText: 'Selecione Mês e Ano',
-              );
-              if (picked != null) {
-                ref.read(expenseListFilterProvider.notifier).setDate(picked);
-              }
-            },
-          ),
-        ],
       ),
       drawer: isDesktop ? null : const MyDrawer(),
       body: SafeArea(
         child: expensesAsync.when(
           data: (expenses) {
             final total = expenses.fold(0.0, (sum, i) => sum + i.amount);
-
             return Column(
               children: [
-                // Total Summary
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(16),
-                  color: Theme.of(context).primaryColor.withOpacity(0.1),
-                  child: Column(
-                    children: [
-                      const Text(
-                        'Total do Mês',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        formatKz(total),
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: Theme.of(context).primaryColor,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                ///
+                _periodSelector(ref, context, total),
+
+                /// Lista de Despesas
                 Expanded(
                   child: RefreshIndicator(
                     onRefresh: () =>
@@ -160,6 +112,54 @@ class ExpensePage extends ConsumerWidget {
           ).push(MaterialPageRoute(builder: (_) => const ExpenseForm())),
           child: const Icon(Icons.add),
         ),
+      ),
+    );
+  }
+
+  Widget _periodSelector(WidgetRef ref, BuildContext context, total) {
+    final date = ref.watch(expenseListFilterProvider);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      color: Theme.of(context).primaryColor.withOpacity(0.1),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          IconButton(
+            icon: const Icon(Icons.chevron_left, color: Colors.redAccent),
+            onPressed: () {
+              final newDate = DateTime(date.year, date.month - 1);
+              ref.read(expenseListFilterProvider.notifier).setDate(newDate);
+            },
+          ),
+          Expanded(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  DateFormat('MMM yyyy', 'pt_PT').format(date).toUpperCase(),
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1,
+                    color: Theme.of(context).primaryColor,
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                Text('Total:  ${formatKz(total)}'),
+              ],
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.chevron_right, color: Colors.blue),
+            onPressed: () {
+              final newDate = DateTime(date.year, date.month + 1);
+              ref.read(expenseListFilterProvider.notifier).setDate(newDate);
+            },
+          ),
+        ],
       ),
     );
   }
