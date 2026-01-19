@@ -9,7 +9,6 @@ import '../../core/widgets/admin_gate.dart';
 import '../../data/models/income.dart';
 import '../../data/providers/account_provider.dart';
 import '../../data/providers/finance_provider.dart';
-import '../form/income.dart';
 
 class ViewIncome extends ConsumerWidget {
   const ViewIncome({super.key, required this.inc});
@@ -25,15 +24,6 @@ class ViewIncome extends ConsumerWidget {
         title: const Text("Detalhes da Receita"),
         centerTitle: true,
         actions: [
-          PermitGate(
-            value: 'Manager',
-            child: IconButton(
-              onPressed: () => Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => IncomeForm(income: inc)),
-              ),
-              icon: const Icon(Icons.edit_outlined, color: AppTheme.primary),
-            ),
-          ),
           PermitGate(
             value: 'Manager',
             child: IconButton(

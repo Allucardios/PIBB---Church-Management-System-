@@ -2,8 +2,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../core/widgets/responsive.dart';
 // Local Imports
+import '../../core/widgets/responsive.dart';
 import '../../data/providers/account_provider.dart';
 import '../../data/providers/auth_provider.dart';
 import '../../data/providers/finance_provider.dart';
@@ -25,7 +25,6 @@ class _HomePageState extends ConsumerState<HomePage> {
   @override
   void initState() {
     super.initState();
-    // Ensure default accounts exist
     Future.microtask(() {
       ref.read(accountServiceProvider.notifier).ensureDefaultAccount();
     });
@@ -87,6 +86,7 @@ class _HomePageState extends ConsumerState<HomePage> {
         ).copyWith(textScaler: TextScaler.linear(1.0)),
         child: BottomNavigationBar(
           type: BottomNavigationBarType.fixed,
+          elevation: 2,
           currentIndex: _page,
           onTap: _goToPage,
           items: _navs,

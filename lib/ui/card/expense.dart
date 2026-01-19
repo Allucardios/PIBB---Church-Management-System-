@@ -16,89 +16,73 @@ class CardExpense extends ConsumerWidget {
     final accountsAsync = ref.watch(accountsStreamProvider);
 
     return Card(
-      margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
       elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: InkWell(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.only(
+          topRight: Radius.circular(12),
+          bottomLeft: Radius.circular(12),
+          bottomRight: Radius.circular(12),
+        ),
+      ),
+      child: ListTile(
         onTap: () => Navigator.of(
           context,
         ).push(MaterialPageRoute(builder: (_) => ViewExpense(exp: exp))),
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  const Icon(
-                    Icons.money_off_outlined,
-                    color: Color(0xFFFFB3BA),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      exp.obs ?? 'Sem descrição',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                        color: Color(0xBD000000),
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  const Icon(Icons.chevron_right_rounded, color: Colors.grey),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    "Total: ${formatKz(exp.amount)}",
-                    style: const TextStyle(
-                      fontSize: 14,
-                      color: Colors.redAccent,
-                    ),
-                  ),
-                  accountsAsync.when(
-                    data: (accounts) {
-                      final acc = accounts
-                          .where((a) => a.id == exp.accountId)
-                          .firstOrNull;
-                      if (acc == null) return const SizedBox.shrink();
-                      return Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 6,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Color(
-                            int.parse(acc.color.replaceFirst('#', '0xFF')),
-                          ).withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Text(
-                          acc.name,
-                          style: TextStyle(
-                            fontSize: 10,
-                            color: Color(
-                              int.parse(acc.color.replaceFirst('#', '0xFF')),
-                            ),
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      );
-                    },
-                    loading: () => const SizedBox.shrink(),
-                    error: (_, __) => const SizedBox.shrink(),
-                  ),
-                ],
-              ),
-            ],
+        leading: const Icon(
+          Icons.money_off_outlined,
+          color: Color(0xFFFFB3BA),
+          size: 30,
+        ),
+        title: Text(
+          exp.obs ?? 'Sem descrição',
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 16,
+            color: Color(0xBD000000),
           ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        subtitle: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              "Total: ${formatKz(exp.amount)}",
+              style: const TextStyle(fontSize: 14, color: Colors.redAccent),
+            ),
+            accountsAsync.when(
+              data: (accounts) {
+                final acc = accounts
+                    .where((a) => a.id == exp.accountId)
+                    .firstOrNull;
+                if (acc == null) return const SizedBox.shrink();
+                return Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 2,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Color(
+                      int.parse(acc.color.replaceFirst('#', '0xFF')),
+                    ).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    acc.name,
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: Color(
+                        int.parse(acc.color.replaceFirst('#', '0xFF')),
+                      ),
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                );
+              },
+              loading: () => const SizedBox.shrink(),
+              error: (_, __) => const SizedBox.shrink(),
+            ),
+          ],
         ),
       ),
     );
