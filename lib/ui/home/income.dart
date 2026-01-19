@@ -80,11 +80,8 @@ class IncomePage extends ConsumerWidget {
                                       mainAxisSpacing: 10,
                                     ),
                                 itemCount: incomes.length,
-                                itemBuilder: (context, index) => SizedBox(
-                                  height: 80,
-                                  width: 150,
-                                  child: CardIncome(inc: incomes[index]),
-                                ),
+                                itemBuilder: (context, index) =>
+                                    CardIncome(inc: incomes[index]),
                               ),
                             ),
                           ),

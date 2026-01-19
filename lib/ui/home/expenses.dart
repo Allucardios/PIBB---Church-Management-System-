@@ -76,7 +76,7 @@ class ExpensePage extends ConsumerWidget {
                                 gridDelegate:
                                     const SliverGridDelegateWithFixedCrossAxisCount(
                                       crossAxisCount: 4,
-                                      childAspectRatio: 4.0,
+                                      childAspectRatio: 3,
                                       crossAxisSpacing: 10,
                                       mainAxisSpacing: 10,
                                     ),
