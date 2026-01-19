@@ -74,14 +74,17 @@ class IncomePage extends ConsumerWidget {
                                 physics: const AlwaysScrollableScrollPhysics(),
                                 gridDelegate:
                                     const SliverGridDelegateWithFixedCrossAxisCount(
-                                      crossAxisCount: 4,
+                                      crossAxisCount: 3,
                                       childAspectRatio: 4.0,
                                       crossAxisSpacing: 10,
                                       mainAxisSpacing: 10,
                                     ),
                                 itemCount: incomes.length,
-                                itemBuilder: (context, index) =>
-                                    CardIncome(inc: incomes[index]),
+                                itemBuilder: (context, index) => SizedBox(
+                                  height: 80,
+                                  width: 150,
+                                  child: CardIncome(inc: incomes[index]),
+                                ),
                               ),
                             ),
                           ),
